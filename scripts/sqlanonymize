@@ -1,0 +1,23 @@
+use Modern::Perl;
+use utf8;
+binmode STDOUT, ":utf8";
+binmode STDERR, ":utf8";
+use autodie;
+
+use Carp qw(longmess);
+$Carp::Verbose = 'true'; #die with stack trace
+use Try::Tiny;
+use Scalar::Util qw(blessed);
+use Params::Validate;
+
+# Copyright (C) 2017 Koha-Suomi
+#
+# This file is part of SQL Anonymizer.
+
+
+use SQLAnon;
+
+
+my $sqlanon = SQLAnon->new();
+$sqlanon->anonymize();
+
