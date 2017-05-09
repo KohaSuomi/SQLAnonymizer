@@ -73,18 +73,18 @@ sub _checkRuleTypeFakeNameList {
   if (exists($fakeNameLists->{$type})) {
     #We got a matching "fake name list" == "type"
   }
-  elsif ($type eq 'preserve') {    #Preserve these values
+  elsif ($type eq 'preserve' || $type eq 'random') {    #Preserve these values
     #This is an allowed exception to the rule
   }
   else {
-    die "Invalid fake name list '$type' in anonymization rules file's table '$table', column '$column'";
+    $l->logdie("Invalid fake name list '$type' in anonymization rules file's table '$table', column '$column'");
   }
 }
 
 my $filterDispatcher = bless({}, 'SQLAnon::Filters');
 sub _checkRuleFilter {
   my ($table, $column, $type, $lists) = @_;
-  die "Invalid filter '$type' in anonymization rules file's table '$table', column '$column'" unless ($filterDispatcher->can($type));
+  $l->logdie("Invalid filter '$type' in anonymization rules file's table '$table', column '$column'") unless ($filterDispatcher->can($type));
 }
 
 sub isTableAnonymizable {

@@ -92,8 +92,8 @@ sub anonymize {
     }
   }
 
-  close($IN) if ($IN != *STDIN);
-  close($OUT) if ($OUT != *STDOUT);
+  close($IN) if ($IN ne *STDIN);
+  close($OUT) if ($OUT ne *STDOUT);
 
   return 1;
 }

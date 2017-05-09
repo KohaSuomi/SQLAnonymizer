@@ -17,6 +17,8 @@ use Params::Validate;
 # This file is part of SQL Anonymizer.
 
 use Getopt::Long;
+
+use SQLAnon;
 use SQLAnon::Logger;
 my $l = bless({}, 'SQLAnon::Logger');
 
@@ -73,6 +75,7 @@ take precedence, otherwise the system-wide configurations are used.
                Overrides 'fakeNameListsDir'
 
 HELP
+  exit 0;
 }
 
 
