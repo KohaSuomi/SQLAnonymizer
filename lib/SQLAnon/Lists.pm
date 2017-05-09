@@ -85,7 +85,6 @@ sub getLists {
   my %lists;
   for (my $i=0 ; $i<scalar(@filenames) ; $i++) {
     my $file = $filenames[$i];
-    $l->trace("Analyzing $file");
     my $type = File::Basename::basename($file, '.csv');
     my $list = {
       file => $file,

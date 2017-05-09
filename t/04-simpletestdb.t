@@ -20,6 +20,8 @@ subtest "Initialize and execute", sub {
   eval {
     ok(SQLAnon::init(),
        "SQLAnon::init success");
+    is(SQLAnon::Config::getConfig()->outputFile, '/tmp/sqlanon_test_output.sql',
+       'SQL is outputed to "/tmp/sqlanon_test_output.sql"');
     ok(SQLAnon::anonymize(),
        "SQLAnon::anonymize success");
   };

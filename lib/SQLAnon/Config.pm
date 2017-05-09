@@ -17,6 +17,7 @@ use Params::Validate;
 # This file is part of SQL Anonymizer.
 
 use Cwd;
+use File::Basename;
 
 =head1 SQLAnon::Config
 
@@ -37,7 +38,8 @@ my $config;
 my $configValidations = {
   fakeNameListsDir =>       { callbacks => { 'file exists' => sub {return (-e $_[0]) ? 1 : 0;} }, },
   anonymizationRulesFile => { callbacks => { 'file exists' => sub {return (-e $_[0]) ? 1 : 0;} }, },
-  dbBackupFile =>           { callbacks => { 'file exists or is undef' => sub {return (not($_[0]) || -e $_[0]) ? 1 : 0;} }, },
+  dbBackupFile =>           { callbacks => { 'file exists or is -' => sub {return ($_[0] eq '-' || -e $_[0]) ? 1 : 0;} }, },
+  outputFile =>             { callbacks => { 'dir is writable or is -' => sub {return ($_[0] eq '-' || -w File::Basename::dirname($_[0])) ? 1 : 0;} }, },
 };
 sub getConfig {
   return $config if $config;
@@ -82,6 +84,9 @@ sub anonymizationRulesFile {
 }
 sub dbBackupFile {
   return $_[0]->{dbBackupFile};
+}
+sub outputFile {
+  return $_[0]->{outputFile};
 }
 
 1;

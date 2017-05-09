@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 use Modern::Perl;
 use utf8;
 binmode STDOUT, ":utf8";
@@ -14,10 +16,69 @@ use Params::Validate;
 #
 # This file is part of SQL Anonymizer.
 
+use Getopt::Long;
+use SQLAnon::Logger;
+my $l = bless({}, 'SQLAnon::Logger');
 
-use SQLAnon;
 
 
-my $sqlanon = SQLAnon->new();
-$sqlanon->anonymize();
+my ($help, $inputStream, $outputStream, $anonymizationRulesFile, $fakeNameListsDir);
+
+GetOptions(
+  "h|help"                    => \$help,
+  "in:s"                      => \$inputStream,
+  "out:s"                     => \$outputStream,
+  "rules:s"                   => \$anonymizationRulesFile,
+  "fakelists:s"               => \$fakeNameListsDir,
+);
+
+if ($help) {
+  print <<HELP;
+
+This program anonymizes a DB dump generated using mysqldump.
+
+It can act as a stream processor, or read/write to given files.
+
+It reads the anonymization rules from a anonymization rules configuration file,
+then it reads a bunch of fake name lists used to replace desired values from a
+list of preconfigured ones.
+
+
+This program can be parametrized using commandline parameters or via
+configuration files.
+
+  SQLAnon.conf configures the defaults
+  log4perl.conf configures the logging
+
+Those configuration files are found either, by running this program from the
+source code distribution directory, or after being installed, in
+/etc/SQLAnon/
+
+If you run this program from the source code directory, the default configs
+take precedence, otherwise the system-wide configurations are used.
+
+
+-h --help      This nice help!
+
+--in           Input stream. Either a filename, or use - for STDIN
+               Overrides configuration 'dbBackupFile'
+
+--out          Output stream, Either a filename, or use - for STDOUT
+               Overrides configuration 'outputFile'
+
+--rules        The configuration file to use to anonymize the given DB dump
+               Overrides configuration 'anonymizationRulesFile'
+
+--fakelists    From which directory to look for the fake name lists?
+               Overrides 'fakeNameListsDir'
+
+HELP
+}
+
+
+
+
+SQLAnon::init($anonymizationRulesFile, $fakeNameListsDir);
+SQLAnon::anonymize($inputStream, $outputStream);
+
 

@@ -34,6 +34,9 @@ MariaDB/MySQL mysqldump-tool SQL anonymizer
 
 my $parser = Text::CSV->new( { binary => 1, quote_char => "'", escape_char => '\\', keep_meta_info => 1, allow_loose_escapes => 1, always_quote => 1 });
 
+my $IN; #Input stream
+my $OUT; #Output stream
+
 my $create_table_name;
 my $column_number = 0;
 my $column_name;
@@ -60,19 +63,10 @@ sub init {
 }
 
 sub anonymize {
-  my ($fh) = @_;
-  my $FH;
-  my $c = SQLAnon::Config::getConfig();
-  if (not($fh)) {
-    $fh = $c->dbBackupFile;
-  }
-  if (ref($fh) ne 'GLOB') {
-    my $filename = $fh;
-    open($FH, "<:encoding(UTF-8)", $filename);
-  }
-  $FH = $fh unless $FH;
+  my ($inputStream, $outputStream) = @_;
+  ($IN, $OUT) = getIOHandles($inputStream, $outputStream);
 
-  while (<$FH>) {
+  while (<$IN>) {
     if ($inside_create == 1 && $_ =~ /ENGINE=(InnoDB|MyISAM)/) {
       $inside_create = 0; # create statement is finished
     }
@@ -90,14 +84,17 @@ sub anonymize {
     }
     else {
       # this line won't be modified so just print it.
-      print
+      print $OUT $_;
     }
 
     if($inside_insert == 1 && $_ =~ /\);\n/) {
       $inside_insert = 0; # This insert is finished
     }
   }
-  close($FH);
+
+  close($IN) if ($IN != *STDIN);
+  close($OUT) if ($OUT != *STDOUT);
+
   return 1;
 }
 
@@ -140,7 +137,10 @@ sub inside_insert {
 
       # use Text::CSV to parse the values
       my $status = $parser->parse($lines[$i]);
-      my @columns = $parser->fields(); if($#columns == 0) { print $lines[$i], "\n"; die "\noops\n", $parser->error_input(); exit }
+      my @columns = $parser->fields();
+      if($#columns == 0) {
+        $l->logdie("Error parsing .csv-line '".$lines[$i]."' got Text::CSV error: ".$parser->error_input());
+      }
 
       # store quote status foreach column
       #my @quoted;
@@ -169,7 +169,7 @@ sub inside_insert {
 
       # put quotes back
       foreach my $index (0..$#columns) {
-  die " $insert_table_name $index " , Dumper(%data_types) if ! exists $data_types{$insert_table_name}{$index};
+        $l->logdie(" $insert_table_name $index " . Dumper(%data_types)) if ! exists $data_types{$insert_table_name}{$index};
         if (exists $quoted_types{$data_types{$insert_table_name}{$index}} && $columns[$index] ne 'NULL') {
 
           # binary 1 & 0 mangled by Text::CSV, replace with unquoted 1 & 0
@@ -192,10 +192,10 @@ sub inside_insert {
       $lines[$i] = join(',', @columns);
     }
     # reconstunct entire insert statement and print out
-    print $start_of_string . join('),(', @lines) . ");\n";
+    print $OUT $start_of_string . join('),(', @lines) . ");\n";
   }
   else {
-    print # print unmodifed insert
+    print $OUT $_; # print unmodifed insert
   }
 
 }
@@ -342,6 +342,38 @@ sub pushToAnonValStash {
 }
 sub getAnonValStash {
   return \%anonValStash;
+}
+
+=head2 getIOHandles
+
+Based on the cli and config arguments, we figure out which file/stream we read and write to
+
+=cut
+
+sub getIOHandles {
+  my ($inputStream, $outputStream) = @_;
+  my ($IN, $OUT);
+  my $c = SQLAnon::Config::getConfig();
+
+  if (not($inputStream)) {
+    $inputStream = $c->dbBackupFile;
+  }
+  if ($inputStream ne '-') {
+    open($IN, "<:encoding(UTF-8)", $inputStream);
+  }
+  else {
+    $IN = *STDIN;
+  }
+  if (not($outputStream)) {
+    $outputStream = $c->outputFile;
+  }
+  if ($outputStream ne '-') {
+    open($OUT, ">:encoding(UTF-8)", $outputStream);
+  }
+  else {
+    $OUT = *STDOUT;
+  }
+  return ($IN, $OUT);
 }
 
 1;
