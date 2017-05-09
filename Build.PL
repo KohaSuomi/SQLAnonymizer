@@ -35,6 +35,7 @@ $class->new(
     'Modern::Perl',
   },
   requires => {
+    'Test::MockModule'                  => '> 0.01',
     'Text::CSV'                         => '> 0.01',
     'Memoize'                           => '> 0.01',
     'Log::Log4perl'                     => '> 0.01',

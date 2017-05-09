@@ -49,9 +49,14 @@ my %data_types;   #What data types are each column in each table? ...   table->c
 my %column_sizes; #How many characters each column in each table can take? ...   table->columnNumber->?size?
 my %quoted_types = map { $_ => 1 } qw( bit char datetime longtext text varchar );
 
+#Tracks all the anonymized values for each table, insert-row and column. This is used afterwards to run automated tests against.
+my %anonValStash; #$anonValStash{$tableName}[insertRowIndex]{$columnName} = $newValue;
+
+
 sub init {
   SQLAnon::AnonRules::loadAnonymizationRules();
   SQLAnon::Lists::loadFakeNameLists();
+  return 1;
 }
 
 sub anonymize {
@@ -93,6 +98,7 @@ sub anonymize {
     }
   }
   close($FH);
+  return 1;
 }
 
 sub create_table {
@@ -105,14 +111,15 @@ sub create_table {
 sub inside_create {
   # process create statment to record ordinal position of columns
   my ($column, $type, $size) = @_;
-  $l->debug("Analyzing table '$create_table_name', column '$column', type '$type', size '".($size || 'undef')."'");
+  $size = _getColSize($type, $size);
   $column_name = $column;
-  if(SQLAnon::AnonRules::getRule($create_table_name, $column_name)) {
-    $table{$create_table_name}{$column_name} = $column_number;
-    $table_reverse{$create_table_name}{$column_number} = $column_name;
-  }
+  $table{$create_table_name}{$column_name} = $column_number;
+  $table_reverse{$create_table_name}{$column_number} = $column_name;
   $data_types{$create_table_name}{$column_number} = $type;
-  $column_sizes{$create_table_name}{$column_number} = $size || undef;
+  $column_sizes{$create_table_name}{$column_number} = $size;
+
+  $l->debug("Analyzed table '$create_table_name', column '$column', type '$type', size '$size'");
+
   $column_number++;
 }
 
@@ -122,19 +129,18 @@ sub inside_insert {
   $insert_table_name = $a2;
   my $start_of_string = $a1;
   $inside_insert = 1;
-
-  if(exists $table{$insert_table_name}) { # table contains anon candidate
+  if(SQLAnon::AnonRules::isTableAnonymizable($insert_table_name)) {
     # split insert statement
     my @lines = split('\),\(', $_);
     $lines[0] =~ s/\Q$start_of_string\E//g; # remove start of insert string, only interested in the "values"
     $lines[$#lines] =~ s/\);\n//g; # remove trailing bracket from last line of insert
 
     # loop through each line
-    foreach my $line (0..$#lines) {
+    for (my $i=0 ; $i<scalar(@lines) ; $i++) {
 
       # use Text::CSV to parse the values
-      my $status = $parser->parse($lines[$line]);
-      my @columns = $parser->fields(); if($#columns == 0) { print $lines[$line], "\n"; die "\noops\n", $parser->error_input(); exit }
+      my $status = $parser->parse($lines[$i]);
+      my @columns = $parser->fields(); if($#columns == 0) { print $lines[$i], "\n"; die "\noops\n", $parser->error_input(); exit }
 
       # store quote status foreach column
       #my @quoted;
@@ -144,18 +150,20 @@ sub inside_insert {
 
       # replace selected columns with anon value
       map {
-        my $collumn = $table_reverse{$insert_table_name }{$_}; #$column and $column_name already conflict with global scope :(
+        my $collumn = getColumnNameByIndex($insert_table_name, $_); #$column and $column_name already conflict with global scope :(
         my $old_val = $columns[$_];
         $l->trace("Table '$insert_table_name', column '$collumn', old_val '$old_val'") if $l->is_trace;
-        my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, $old_val );
+        my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, \@columns, $_ );
         if ($old_val ne 'NULL' ) { # only anonymize if not null
 
-          $columns[$_] = _trimValToFitColumn($insert_table_name, $collumn, $data_types{$insert_table_name}{$_}, $old_val, $new_val);
+          $columns[$_] = _trimValToFitColumn($insert_table_name, $collumn, $old_val, $new_val);
 
           $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', is '$columns[$_]'") if $l->is_debug;
+          pushToAnonValStash($insert_table_name, $i, $collumn, $columns[$_]);
         }
         else {
           $l->debug("Table '$insert_table_name', column '$collumn', is NULL") if $l->is_debug;
+          pushToAnonValStash($insert_table_name, $i, $collumn, $columns[$_]);
         }
       } _get_anon_col_index($insert_table_name);
 
@@ -181,7 +189,7 @@ sub inside_insert {
         }
       }
       # put the columns back together
-      $lines[$line] = join(',', @columns);
+      $lines[$i] = join(',', @columns);
     }
     # reconstunct entire insert statement and print out
     print $start_of_string . join('),(', @lines) . ");\n";
@@ -202,13 +210,16 @@ memoize('_get_anon_col_index');
 sub _get_anon_col_index {
   my $table_name = shift;
   my @idx;
-  foreach my $col (keys %{ $table{ $table_name } } ) {
-    if (exists $table{$table_name}{$col}) {
-      push @idx, $table{$table_name}{$col};
+  foreach my $anonColumnName (@{SQLAnon::AnonRules::getAnonymizableColumnNames($table_name)}) {
+    my $idx = getColumnIndexByName($table_name, $anonColumnName);
+    if (defined($idx)) { #Defined is important because index can be 0
+      push(@idx, $idx);
+    }
+    else {
+      $l->warn("No such anonymizable column '$anonColumnName', for table '$table_name'. Do you have a typo in your anonymization configuration?");
     }
   }
-  return sort @idx;
-
+  return sort {$a <=> $b} @idx;
 }
 
 =head2 _dispatchValueFinder
@@ -219,26 +230,30 @@ Find out how to get the anonymized value and get it
 
 my $filterDispatcher = bless({}, 'SQLAnon::Filters');
 sub _dispatchValueFinder {
-  my ($tableName, $columnName, $val) = @_;
+  my ($tableName, $columnName, $columnValues, $index) = @_;
   my $rule = SQLAnon::AnonRules::getRule( $tableName, $columnName );
   $l->logdie("Anonymization rule not found for table '$tableName', column '$columnName'. We shouldn't even need to ask for it? Why does this happen?") unless $rule;
 
-  my $newVal;
+  my ($newVal, $dispatchType);
   if ($rule->{dispatch}) {
+    $dispatchType = 'dispatch';
     my $closure = eval $rule->{ 'dispatch' };
     $newVal = $closure->();
     $l->logdie("In anonymization rule for table '$tableName', column '$columnName', when compiling custom code injection, got the following error:    $@") if $@;
   }
   elsif ($rule->{filter}) {
+    $dispatchType = 'filter';
     my $filter = $rule->{filter};
-    $newVal = $filterDispatcher->$filter($val);
+    $newVal = $filterDispatcher->$filter($tableName, $columnName, $columnValues, $index);
   }
   elsif ($rule->{fakeNameList}) {
-    $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList});
+    $dispatchType = 'fakeNameList';
+    $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList}, $columnValues->[ $index ]);
   }
   else {
     $l->logdie("In anonymization rule for table '$tableName', column '$columnName', dont know how to get the anonymized value using rule '".$l->flatten($rule)."'");
   }
+  $l->debug("Dispatched table '$tableName', column '$columnName' via '$dispatchType', returning '$newVal'");
   return $newVal;
 }
 
@@ -248,24 +263,85 @@ Make sure the new anonymized value is not too large
 
 =cut
 
-memoize('_trimValToFitColumn');
 sub _trimValToFitColumn {
-  my ($tableName, $columnName, $columnType, $oldVal, $newVal) = @_;
+  my ($tableName, $columnName, $oldVal, $newVal) = @_;
+  my $columnIndex = getColumnIndexByName($tableName, $columnName);
 
-  my $maxSize = $column_sizes{$tableName}{$columnName};
-  if (not($maxSize)) { #Max size might not be explicitly known, so we can infer it from the data type
-    if ($columnType =~ /text/) { #bigtext, mediumtext, text, ...
-      $maxSize = 1024;
-    }
-    elsif ($columnType eq 'date') {
-      $maxSize = 10;
-    }
-  }
+  my $maxSize = $column_sizes{$tableName}{$columnIndex};
   my $lengthOld = length($oldVal);
   if ($maxSize && $lengthOld <= $maxSize) {
     return $newVal;
   }
   return substr($newVal, 0, $lengthOld);
+}
+
+memoize('_getColSize');
+sub _getColSize {
+  my ($columnType, $size) = @_;
+  return $size if $size;
+  if (not($size)) { #Max size might not be explicitly known, so we can infer it from the data type
+    if ($columnType =~ /text/) { #bigtext, mediumtext, text, ...
+      $size = 1024;
+    }
+    elsif ($columnType eq 'date') {
+      $size = 10;
+    }
+  }
+  return $size;
+}
+
+=head2 getColumnNameByIndex
+
+TODO: Table information should be refactored to it's own package
+
+=cut
+
+sub getColumnNameByIndex {
+  my ($tableName, $colIndex) = @_;
+  return $table_reverse{$tableName}{$colIndex};
+}
+
+=head2 getColumnIndexByName
+
+TODO: Table information should be refactored to it's own package
+
+=cut
+
+sub getColumnIndexByName {
+  my ($tableName, $colName) = @_;
+  $l->logdie("\$colName '$colName' is not a SCALAR") if (ref($colName));
+  return $table{$tableName}{$colName};
+}
+
+=head2 getColumnNames
+
+@PARAM1 String, table name
+@RETURNS ARRAYRef of Strings, The names of the columns of the given table in proper order
+
+=cut
+
+memoize('getColumnNames');
+sub getColumnNames {
+  my ($tableName) = @_;
+  my @names;
+  while ( my ($i, $name) = each %{$table_reverse{$tableName}}) {
+    $names[$i] = $name;
+  }
+  return \@names;
+}
+
+=head pushToAnonValStash
+
+Store the anonymized values to the stash so we can inspect what happened afterwards without resorting to reparsing the printed output.
+
+=cut
+
+sub pushToAnonValStash {
+  my ($tableName, $insertRowIndex, $columnName, $val) = @_;
+  $anonValStash{$tableName}[$insertRowIndex]{$columnName} = $val;
+}
+sub getAnonValStash {
+  return \%anonValStash;
 }
 
 1;

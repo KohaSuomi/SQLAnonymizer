@@ -57,6 +57,31 @@ INSERT INTO `borrowers` VALUES (1,"23529000445172","Daniels","Tanya","Mrs","resp
 /*!40000 ALTER TABLE `borrowers` ENABLE KEYS */;
 UNLOCK TABLES;
 
+--
+-- Table structure for table `message_queue`
+--
+
+DROP TABLE IF EXISTS `message_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `message_queue` (
+  `message_id` int(11) NOT NULL AUTO_INCREMENT,
+  `content` text COLLATE utf8_unicode_ci,
+  `to_address` mediumtext COLLATE utf8_unicode_ci,
+  PRIMARY KEY (`message_id`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `message_queue`
+--
+
+LOCK TABLES `message_queue` WRITE;
+/*!40000 ALTER TABLE `message_queue` DISABLE KEYS */;
+INSERT INTO `message_queue` VALUES (1,"This is a test content\nThis is lke any other text\n    sometimes padded and centralized   \n","email55@example55.com"),(2,"Another test message","hopeful@together.com");
+/*!40000 ALTER TABLE `message_queue` ENABLE KEYS */;
+UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

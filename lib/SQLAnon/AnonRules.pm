@@ -49,20 +49,20 @@ sub loadAnonymizationRules {
     next if (scalar(@$row) <= 1);
     $l->trace("Loading row ".$l->flatten($row)) if $l->is_trace;
 
-    my ($table, $column, $type) = @$row;
+    my ($tableName, $columnName, $type) = @$row;
 
     my $closure;
     if ($type =~ /^sub\s*\{.+\}$/) {
-      $anon_columns{ $table }{ $column }{'dispatch'} = $type;
+      $anon_columns{ $tableName }{ $columnName }{'dispatch'} = $type;
     }
     elsif ($type =~ /\(\)$/) { #Ends with () means uses a pre-existing filter
       $type = substr($type, 0, length($type)-2);
-      _checkRuleFilter($table, $column, $type, $lists);
-      $anon_columns{ $table }{ $column }{'filter'} = $type;
+      _checkRuleFilter($tableName, $columnName, $type, $lists);
+      $anon_columns{ $tableName }{ $columnName }{'filter'} = $type;
     }
     else {
-      _checkRuleTypeFakeNameList($table, $column, $type, $lists);
-      $anon_columns{ $table }{ $column }{'fakeNameList'} = $type;
+      _checkRuleTypeFakeNameList($tableName, $columnName, $type, $lists);
+      $anon_columns{ $tableName }{ $columnName }{'fakeNameList'} = $type;
     }
   }
   return \%anon_columns;
@@ -87,9 +87,20 @@ sub _checkRuleFilter {
   die "Invalid filter '$type' in anonymization rules file's table '$table', column '$column'" unless ($filterDispatcher->can($type));
 }
 
+sub isTableAnonymizable {
+  my ($tableName) = @_;
+  return (exists $anon_columns{$tableName}) ? 1 : 0;
+}
+
+sub getAnonymizableColumnNames {
+  my ($tableName) = @_;
+  my @columnNames = keys %{$anon_columns{$tableName}};
+  return \@columnNames;
+}
+
 sub getRule {
-  my ($table, $column) = @_;
-  return $anon_columns{$table}{$column};
+  my ($tableName, $columnName) = @_;
+  return $anon_columns{$tableName}{$columnName};
 }
 
 1;

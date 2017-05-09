@@ -1,0 +1,86 @@
+borrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+borrowers, surname,            surname
+borrowers, firstname,          firstname
+borrowers, othernames,         reservationid
+borrowers, title,              adjective
+borrowers, email,              "sub { return 'nobody@example.com'; }"
+borrowers, phone,              "sub { return '000-000 0000'; }"
+borrowers, mobile,             "sub { return '000-000 0000'; }"
+borrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
+borrowers, userid,             adjective
+borrowers, opacnote,           note
+borrowers, borrowernotes,      note
+borrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+borrowers, address,            "sub { return SQLAnon::Lists::get_value('adjective').' '.SQLAnon::Lists::get_value('address'); }"
+borrowers, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
+borrowers, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
+borrowers, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+borrowers, contactname,        surname
+borrowers, contacttitle,       preserve
+borrowers, contactfirstname,   firstname
+borrowers, contactnote,        note
+borrowers, altcontactfirstname,firstname
+borrowers, altcontactsurname,  surname
+borrowers, altcontactaddress1, address
+borrowers, altcontactphone,    "sub { return '000-000 0000'; }"
+
+deletedborrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+deletedborrowers, surname,            surname
+deletedborrowers, firstname,          firstname
+deletedborrowers, othernames,         reservationid
+deletedborrowers, title,              adjective
+deletedborrowers, email,              "sub { return 'nobody@example.com'; }"
+deletedborrowers, phone,              "sub { return '000-000 0000'; }"
+deletedborrowers, mobile,             "sub { return '000-000 0000'; }"
+deletedborrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
+deletedborrowers, userid,             adjective
+deletedborrowers, opacnote,           note
+deletedborrowers, borrowernotes,      note
+deletedborrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+deletedborrowers, address,            "sub { return SQLAnon::Lists::get_value('adjective').' '.SQLAnon::Lists::get_value('address'); }"
+deletedborrowers, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
+deletedborrowers, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
+deletedborrowers, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+deletedborrowers, contactname,        surname
+deletedborrowers, contacttitle,       preserve
+deletedborrowers, contactfirstname,   firstname
+deletedborrowers, contactnote,        note
+deletedborrowers, altcontactfirstname,firstname
+deletedborrowers, altcontactsurname,  surname
+deletedborrowers, altcontactaddress1, address
+deletedborrowers, altcontactphone,    "sub { return '000-000 0000'; }"
+
+borrower_modifications, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+borrower_modifications, surname,            surname
+borrower_modifications, firstname,          firstname
+borrower_modifications, othernames,         reservationid
+borrower_modifications, title,              adjective
+borrower_modifications, email,              "sub { return 'nobody@example.com'; }"
+borrower_modifications, phone,              "sub { return '000-000 0000'; }"
+borrower_modifications, mobile,             "sub { return '000-000 0000'; }"
+borrower_modifications, smsalertnumber,     "sub { return '000-000 0000'; }"
+borrower_modifications, userid,             adjective
+borrower_modifications, opacnote,           note
+borrower_modifications, borrowernotes,      note
+borrower_modifications, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+borrower_modifications, address,            "sub { return SQLAnon::Lists::get_value('adjective').' '.SQLAnon::Lists::get_value('address'); }"
+borrower_modifications, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
+borrower_modifications, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
+borrower_modifications, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+borrower_modifications, contactname,        surname
+borrower_modifications, contacttitle,       preserve
+borrower_modifications, contactfirstname,   firstname
+borrower_modifications, contactnote,        note
+borrower_modifications, altcontactfirstname,firstname
+borrower_modifications, altcontactsurname,  surname
+borrower_modifications, altcontactaddress1, address
+borrower_modifications, altcontactphone,    "sub { return '000-000 0000'; }"
+
+message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
+message_queue, to_address, "sub { return 'nobody@example.com'; }"
+
+z3950servers, userid,      random
+z3950servers, password,    random
+
+systempreferences, value,  kohaSystempreferences()
+
