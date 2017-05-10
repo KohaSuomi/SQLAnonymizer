@@ -159,7 +159,7 @@ sub inside_insert {
         }
       } _get_anon_col_index($insert_table_name);
 
-      $lines->[$i] = recomposeValueGroup($columns, $metaInfos);
+      $lines->[$i] = recomposeValueGroup($insert_table_name, $columns, $metaInfos);
     }
     # reconstunct entire insert statement and print out
     print $OUT recomposeInsertStatement($start_of_string, $lines);
@@ -236,7 +236,7 @@ sub decomposeValueGroup {
 }
 
 sub recomposeValueGroup {
-  my ($columns, $metas) = @_;
+  my ($tableName, $columns, $metas) = @_;
 
   #my $status = $parser->combine(@$columns);    # combine columns into a string
   #my $line   = $parser->string();              # get the combined string
@@ -263,6 +263,7 @@ sub recomposeValueGroup {
         $parser->combine( $columns->[$i] );
         $columns->[$i] =  $parser->string;
       #}
+      $l->trace("Quoted table '$tableName', column '".getColumnNameByIndex($tableName, $i)."' value '".$columns->[$i]."'") if $l->is_trace;
     }
   }
   # put the columns back together
