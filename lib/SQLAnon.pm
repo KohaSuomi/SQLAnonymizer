@@ -50,7 +50,6 @@ my %column_reverse;
 my %contains_anon_column;
 my %data_types;   #What data types are each column in each table? ...   table->columnNumber->?type?
 my %column_sizes; #How many characters each column in each table can take? ...   table->columnNumber->?size?
-my %quoted_types = map { $_ => 1 } qw( bit char datetime longtext text varchar );
 
 #Tracks all the anonymized values for each table, insert-row and column. This is used afterwards to run automated tests against.
 my %anonValStash; #$anonValStash{$tableName}[insertRowIndex]{$columnName} = $newValue;
@@ -62,6 +61,7 @@ sub init {
   return 1;
 }
 
+my $inside_insert_regexp = qr/^(INSERT INTO `([a-z0-9_]+)` VALUES\s\()/;
 sub anonymize {
   my ($inputStream, $outputStream) = @_;
   ($IN, $OUT) = getIOHandles($inputStream, $outputStream);
@@ -79,7 +79,7 @@ sub anonymize {
       inside_create($1, $2, $3); # parse create statement to index column positions
     }
 
-    if($_ =~ /^(INSERT INTO `([a-z0-9_]+)` VALUES\s\()/) {
+    if($_ =~ $inside_insert_regexp) {
       inside_insert($1, $2); # anonymize VALUES statement
     }
     else {
@@ -127,20 +127,12 @@ sub inside_insert {
   my $start_of_string = $a1;
   $inside_insert = 1;
   if(SQLAnon::AnonRules::isTableAnonymizable($insert_table_name)) {
-    # split insert statement
-    my @lines = split('\),\(', $_);
-    $lines[0] =~ s/\Q$start_of_string\E//g; # remove start of insert string, only interested in the "values"
-    $lines[$#lines] =~ s/\);\n//g; # remove trailing bracket from last line of insert
+    my ($insert_table_name, $start_of_string, $lines) = decomposeInsertStatement($_);
 
     # loop through each line
-    for (my $i=0 ; $i<scalar(@lines) ; $i++) {
+    for (my $i=0 ; $i<scalar(@$lines) ; $i++) {
 
-      # use Text::CSV to parse the values
-      my $status = $parser->parse($lines[$i]);
-      my @columns = $parser->fields();
-      if($#columns == 0) {
-        $l->logdie("Error parsing .csv-line '".$lines[$i]."' got Text::CSV error: ".$parser->error_input());
-      }
+      my ($columns, $metaInfos) = decomposeValueGroup($lines->[$i]);
 
       # store quote status foreach column
       #my @quoted;
@@ -151,53 +143,130 @@ sub inside_insert {
       # replace selected columns with anon value
       map {
         my $collumn = getColumnNameByIndex($insert_table_name, $_); #$column and $column_name already conflict with global scope :(
-        my $old_val = $columns[$_];
+        my $old_val = $columns->[$_];
         $l->trace("Table '$insert_table_name', column '$collumn', old_val '$old_val'") if $l->is_trace;
-        my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, \@columns, $_ );
+        my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, $columns, $_ );
         if ($old_val ne 'NULL' ) { # only anonymize if not null
 
-          $columns[$_] = _trimValToFitColumn($insert_table_name, $collumn, $old_val, $new_val);
+          $columns->[$_] = _trimValToFitColumn($insert_table_name, $collumn, $old_val, $new_val);
 
-          $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', is '$columns[$_]'") if $l->is_debug;
-          pushToAnonValStash($insert_table_name, $i, $collumn, $columns[$_]);
+          $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', is '$columns->[$_]'") if $l->is_debug;
+          pushToAnonValStash($insert_table_name, $i, $collumn, $columns->[$_]);
         }
         else {
           $l->debug("Table '$insert_table_name', column '$collumn', is NULL") if $l->is_debug;
-          pushToAnonValStash($insert_table_name, $i, $collumn, $columns[$_]);
+          pushToAnonValStash($insert_table_name, $i, $collumn, $columns->[$_]);
         }
       } _get_anon_col_index($insert_table_name);
 
-      # put quotes back
-      foreach my $index (0..$#columns) {
-        $l->logdie(" $insert_table_name $index " . Dumper(%data_types)) if ! exists $data_types{$insert_table_name}{$index};
-        if (exists $quoted_types{$data_types{$insert_table_name}{$index}} && $columns[$index] ne 'NULL') {
-
-          # binary 1 & 0 mangled by Text::CSV, replace with unquoted 1 & 0
-          my $bin_1 = quotemeta(chr(1));
-          my $bin_0 = quotemeta(chr(0));
-          if($columns[$index] =~ /$bin_1/) {
-            $columns[$index] = 1; # if binary 1, set unquoted integer 1
-          }
-          elsif ($columns[$index] =~ /$bin_0/) {
-             $columns[$index] = 0; # if binary 0, set unquoted integer 0
-          }
-          else {
-            # use Text:CSV to add quotes - it will escape any quotes in the string
-            $parser->combine( $columns[$index] );
-            $columns[$index] =  $parser->string;
-          }
-        }
-      }
-      # put the columns back together
-      $lines[$i] = join(',', @columns);
+      $lines->[$i] = recomposeValueGroup($columns, $metaInfos);
     }
     # reconstunct entire insert statement and print out
-    print $OUT $start_of_string . join('),(', @lines) . ");\n";
+    print $OUT recomposeInsertStatement($start_of_string, $lines);
   }
   else {
     print $OUT $_; # print unmodifed insert
   }
 
+}
+
+=head2 decomposeInsertStatement
+
+Splits a INSERT statement to a list of individual VALUE-groups and the prefixing INSERT stanzas
+
+You can recomposeInsertStatement() using these same @RETURN values.
+
+@PARAM1 String, the complete INSERT statement with VALUES and all.
+@RETURNS LIST of [0] = String, the table name
+                 [1] = String, the start of the INSERT statement without VALUE-groups
+                 [2] = ARRAYRef of VALUE-groups
+
+=cut
+
+sub decomposeInsertStatement {
+  my ($insertStatement) = @_;
+
+  if($insertStatement =~ $inside_insert_regexp) {
+    my $insertPrefix = $1;
+    my $tableName = $2;
+    # split insert statement
+    my @lines = split('\)\s*,\s*\(', $insertStatement);
+    $lines[0] =~ s/\Q$insertPrefix\E//; # remove start of insert string
+    $lines[$#lines] =~ s/\);\n?//; # remove trailing bracket from last line of insert
+    return ($tableName, $insertPrefix, \@lines);
+  }
+  else {
+    $l->logdie("On DB dump line '$.', couldn't parse INSERT statement '$insertStatement'");
+  }
+}
+
+=head2 recomposeInsertStatement
+
+=cut
+
+sub recomposeInsertStatement {
+  my ($insertPrefix, $valueStrings) = @_;
+
+  return $insertPrefix . join('),(', @$valueStrings) . ");\n";
+}
+
+=head2 decomposeValueGroup
+
+Splits a VALUE-group from a INSERT statement to a list of individual column values
+
+You can recomposeValuegroup() using these same @RETURN values.
+
+@PARAM1 String, the complete VALUE-group stanza
+@RETURNS List of [0] = ARRAYRef of column values
+                 [1] = ARRAYRef of column metainfo flags (see. http://search.cpan.org/~makamaka/Text-CSV-1.33/lib/Text/CSV.pm#meta_info)
+
+=cut
+
+sub decomposeValueGroup {
+  my ($valueString) = @_;
+
+  # use Text::CSV to parse the values
+  my $status = $parser->parse($valueString);
+  my @columns = $parser->fields();
+  if($#columns == 0) {
+    $l->logdie("Error parsing .csv-line '$valueString' got Text::CSV status='$status' error: ".$parser->error_input());
+  }
+  my @meta = $parser->meta_info();
+  return (\@columns, \@meta);
+}
+
+sub recomposeValueGroup {
+  my ($columns, $metas) = @_;
+
+  #my $status = $parser->combine(@$columns);    # combine columns into a string
+  #my $line   = $parser->string();              # get the combined string
+  #unless($line) {
+  #  $l->logdie("Error combining columns '@$columns', got Text::CSV status='$status' error: ".$parser->error_input());
+  #}
+  #return $line;
+
+  # put quotes back
+  for (my $i=0 ; $i<scalar(@$columns) ; $i++) {
+    if ($metas->[$i] & 0x0001) { #If the 1st bit is on, then this column was quoted
+
+      # binary 1 & 0 mangled by Text::CSV, replace with unquoted 1 & 0
+      #my $bin_1 = quotemeta(chr(1));
+      #my $bin_0 = quotemeta(chr(0));
+      #if($columns->[$i] =~ /$bin_1/) {
+      #  $columns->[$i] = 1; # if binary 1, set unquoted integer 1
+      #}
+      #elsif ($columns->[$i] =~ /$bin_0/) {
+      #   $columns->[$i] = 0; # if binary 0, set unquoted integer 0
+      #}
+      #else {
+        # use Text:CSV to add quotes - it will escape any quotes in the string
+        $parser->combine( $columns->[$i] );
+        $columns->[$i] =  $parser->string;
+      #}
+    }
+  }
+  # put the columns back together
+  return join(',', @$columns);
 }
 
 =head2 _get_anon_col_index
@@ -280,11 +349,14 @@ sub _getColSize {
   my ($columnType, $size) = @_;
   return $size if $size;
   if (not($size)) { #Max size might not be explicitly known, so we can infer it from the data type
-    if ($columnType =~ /text/) { #bigtext, mediumtext, text, ...
+    if ($columnType =~ /(?:text|blob)/) { #bigtext, mediumtext, text, blob, ...
       $size = 1024;
     }
     elsif ($columnType eq 'date') {
       $size = 10;
+    }
+    elsif ($columnType eq 'timestamp') {
+      $size = 24;
     }
   }
   return $size;
