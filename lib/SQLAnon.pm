@@ -432,7 +432,7 @@ sub getIOHandles {
     $inputStream = $c->dbBackupFile;
   }
   if ($inputStream ne '-') {
-    open($IN, "<:encoding(UTF-8)", $inputStream);
+    open($IN, "<:encoding(UTF-8)", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
   }
   else {
     $IN = *STDIN;
@@ -441,7 +441,7 @@ sub getIOHandles {
     $outputStream = $c->outputFile;
   }
   if ($outputStream ne '-') {
-    open($OUT, ">:encoding(UTF-8)", $outputStream);
+    open($OUT, ">:encoding(UTF-8)", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
   }
   else {
     $OUT = *STDOUT;
