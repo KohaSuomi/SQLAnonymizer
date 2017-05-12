@@ -9,6 +9,7 @@ binmode(STDERR, ":utf8");
 binmode(STDIN, ":utf8");
 
 use Test::More;
+use Test::MockModule;
 
 
 
@@ -49,6 +50,11 @@ subtest "SQLAnon::decompose/recompose insert statement", sub {
   ## INSERT INTO `borrowers` VALUES (1,'1','Admin','Koha','',NULL,'',NULL,'MPL','S',NULL,'2099-12-31',NULL),(2,'term1','SIP-Server','Sippy2','',NULL,'5601 Library Rd.','(212) 555-1212',NULL,'CPL','ST','1985-10-24','2020-12-31','\$2a\$08\$Qz/FkOMmEne3.m0WoYHvZ.4eVNuNmX9ZGzRntt9aircQSWj0D5Oxm'),(3,'23529000445172','Daniels','Tanya','',NULL,'2035 Library Rd.','(212) 555-1212','1966-10-14','MPL','PT','1990-08-22','2020-12-31','42b29d0771f3b7ef'),(4,'23529000105040','Dillon','Eva','',NULL,'8916 Library Rd.','(212) 555-1212','1952-04-03','MPL','PT','1987-07-01','2020-12-31','42b29d0771f3b7ef');
 
   eval {
+    my $moduleSQLAnon = Test::MockModule->new('SQLAnon');
+    $moduleSQLAnon->mock('getColumnNameByIndex', sub {
+      return 'mocked'; #Logger needs this, otherwise undef errors
+    });
+
     ok(($tableName, $insertPrefix, $valueStrings) = SQLAnon::decomposeInsertStatement($originalInsertStatement),
        "Given a INSERT statement, we receive table name, the statement prefix and individual VALUE groups");
 
@@ -88,7 +94,7 @@ subtest "SQLAnon::decompose/recompose insert statement", sub {
 
     $valueStrings2 = []; #Collect the recomposed value groups here
     for (my $i=0 ; $i<scalar(@originalValueStrings) ; $i++) {
-      ok($valueStrings2->[$i] = SQLAnon::recomposeValueGroup($valueColumns->[$i], $metaColumns->[$i]), "Given the $i. decomposed value group, we receive a recomposed VALUE string");
+      ok($valueStrings2->[$i] = SQLAnon::recomposeValueGroup($tableName, $valueColumns->[$i], $metaColumns->[$i]), "Given the $i. decomposed value group, we receive a recomposed VALUE string");
       is($valueStrings2->[$i], $originalValueStrings[$i],
          "Then the $i. value string is the same as before decomposing");
     }

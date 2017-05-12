@@ -41,7 +41,7 @@ sub loadAnonymizationRules {
   $anonymizationRulesFile = $c->anonymizationRulesFile unless ($anonymizationRulesFile);
   $l->debug("Loading anonymization rules from '$anonymizationRulesFile'");
 
-  my $lists = SQLAnon::Lists::getLists();
+  my $lists = SQLAnon::Lists::getFakeNameLists();
 
   open(my $fh, "<:encoding(UTF-8)", $anonymizationRulesFile);
   my $parser = Text::CSV->new( { binary => 1, allow_whitespace => 1 });
@@ -64,6 +64,9 @@ sub loadAnonymizationRules {
       _checkRuleTypeFakeNameList($tableName, $columnName, $type, $lists);
       $anon_columns{ $tableName }{ $columnName }{'fakeNameList'} = $type;
     }
+  }
+  unless ($parser->eof) {
+    $l->logdie("When parsing anonymization rules from '$anonymizationRulesFile', on row '".$parser->record_number()."' got the error:    ".$parser->error_diag()); #If we didn't reach end of file, throw an error
   }
   return \%anon_columns;
 }

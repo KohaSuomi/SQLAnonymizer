@@ -37,6 +37,7 @@ Looks for the config file from a few locations and reads it as perl code.
 my $config;
 my $configValidations = {
   fakeNameListsDir =>       { callbacks => { 'file exists' => sub {return (-e $_[0]) ? 1 : 0;} }, },
+  fakeNameListMaxSize =>    { callbacks => { 'is integer' => sub {return ($_[0] =~ /^-?\d+$/) ? 1 : 0;} }, },
   anonymizationRulesFile => { callbacks => { 'file exists' => sub {return (-e $_[0]) ? 1 : 0;} }, },
   dbBackupFile =>           { callbacks => { 'file exists or is -' => sub {return ($_[0] eq '-' || -e $_[0]) ? 1 : 0;} }, },
   outputFile =>             { callbacks => { 'dir is writable or is -' => sub {return ($_[0] eq '-' || -w File::Basename::dirname($_[0])) ? 1 : 0;} }, },
@@ -78,6 +79,9 @@ sub _validateConfig {
 ############  Configuration file accessors  ###################################################
 sub fakeNameListsDir {
   return $_[0]->{fakeNameListsDir};
+}
+sub fakeNameListMaxSize {
+  return $_[0]->{fakeNameListMaxSize};
 }
 sub anonymizationRulesFile {
   return $_[0]->{anonymizationRulesFile};

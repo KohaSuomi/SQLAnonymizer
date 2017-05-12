@@ -14,6 +14,10 @@ use Test::MockModule;
 
 
 use SQLAnon::Filters;
+use SQLAnon::Lists;
+
+
+ok(SQLAnon::Lists::loadFakeNameLists(), 'Given fake name lists globally');
 
 
 subtest "SQLAnon::Filters::dateOfBirthAnonDayMonth", sub {
@@ -53,7 +57,17 @@ subtest "SQLAnon::Filters::kohaSystempreferences", sub {
 
 
 
-
+subtest "SQLAnon::Filters::addressWithSuffix", sub {
+  my ($oldVal, $val);
+  eval {
+    $oldVal = 'Haimakatu 55';
+    ok($val = SQLAnon::Filters->addressWithSuffix('borrowers', 'address', [$oldVal], 0),
+       'Given filter params, we receive a filtered address');
+    isnt($val, $oldVal,
+       'address filtered');
+  };
+  ok(0, $@) if $@;
+};
 
 
 

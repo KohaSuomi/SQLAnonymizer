@@ -1,14 +1,14 @@
 borrowers, borrowernumber, preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
-borrowers, surname,        surname
-borrowers, firstname,      firstname
-borrowers, othernames,     reservationid
-borrowers, title,          adjective
+borrowers, surname,        sukunimet
+borrowers, firstname,      etunimet
+borrowers, othernames,     varaustunnus
+borrowers, title,          adjektiivit
 borrowers, email,          "sub { return 'nobody@example.com'; }"
 borrowers, phone,          "sub { return '000-000 0000'; }"
-borrowers, userid,         adjective
-borrowers, opacnote,       note
+borrowers, userid,         adjektiivit
+borrowers, opacnote,       quotes
 borrowers, password,       "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
-borrowers, address,        "sub { return SQLAnon::Lists::get_value('adjective').' '.SQLAnon::Lists::get_value('address'); }"
+borrowers, address,        addressWithSuffix()
 borrowers, dateofbirth,    dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
 
 

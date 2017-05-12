@@ -19,10 +19,10 @@ subtest "SQLAnon::AnonRules::loadAnonymizationRules", sub {
   my ($rule, $coderefContent);
   $Data::Dumper::Deparse = 1;
   eval {
-    ok(SQLAnon::AnonRules::loadAnonymizationRules(), 'Given anonymization rules');
+    ok(SQLAnon::AnonRules::loadAnonymizationRules('t/02-anonymization.csv'), 'Given anonymization rules');
 
     ok($rule = SQLAnon::AnonRules::getRule('borrowers', 'title'), 'Got rule for borrower-title');
-    is($rule->{fakeNameList}, 'adjective',                        'Rule uses a fake name list');
+    is($rule->{fakeNameList}, 'adjektiivit',                      'Rule uses a fake name list');
 
     ok($rule = SQLAnon::AnonRules::getRule('borrowers', 'dateofbirth'), 'Got rule for borrower-dateofbirth');
     is($rule->{filter}, 'dateOfBirthAnonDayMonth',                      'Rule uses a filter');

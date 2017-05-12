@@ -8,7 +8,6 @@ borrowers, phone,              "sub { return '000-000 0000'; }"
 borrowers, mobile,             "sub { return '000-000 0000'; }"
 borrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
 borrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrowers, cardnumber,         random
 borrowers, opacnote,           quotes
 borrowers, borrowernotes,      quotes
 borrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
@@ -35,7 +34,6 @@ deletedborrowers, phone,              "sub { return '000-000 0000'; }"
 deletedborrowers, mobile,             "sub { return '000-000 0000'; }"
 deletedborrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
 deletedborrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-deletedborrowers, cardnumber,         random
 deletedborrowers, opacnote,           quotes
 deletedborrowers, borrowernotes,      quotes
 deletedborrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
@@ -62,7 +60,6 @@ borrower_modifications, phone,              "sub { return '000-000 0000'; }"
 borrower_modifications, mobile,             "sub { return '000-000 0000'; }"
 borrower_modifications, smsalertnumber,     "sub { return '000-000 0000'; }"
 borrower_modifications, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrower_modifications, cardnumber,         random
 borrower_modifications, opacnote,           quotes
 borrower_modifications, borrowernotes,      quotes
 borrower_modifications, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
