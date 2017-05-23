@@ -1,7 +1,7 @@
 borrowers, borrowernumber, preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrowers, surname,        sukunimet
 borrowers, firstname,      etunimet
-borrowers, othernames,     varaustunnus
+borrowers, othernames,     "sub { return $_[2]->[$_[3]]; }", #Pick the current index from the array of values in the INSERT-statement's value group
 borrowers, title,          adjektiivit
 borrowers, email,          "sub { return 'nobody@example.com'; }"
 borrowers, phone,          "sub { return '000-000 0000'; }"
