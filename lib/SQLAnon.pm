@@ -115,6 +115,7 @@ sub inside_create {
   # process create statment to record ordinal position of columns
   my ($column, $type, $size) = @_;
   $size = _getColSize($type, $size);
+  $l->warn("Unknown size for table '$create_table_name' column '$column'") if (not($size) && $l->warn());
   $column_name = $column;
   $table{$create_table_name}{$column_name} = $column_number;
   $table_reverse{$create_table_name}{$column_number} = $column_name;
@@ -364,6 +365,21 @@ sub _getColSize {
     }
     elsif ($columnType eq 'timestamp') {
       $size = 24;
+    }
+    elsif ($columnType eq 'datetime') {
+      $size = 24;
+    }
+    elsif ($columnType eq 'enum') {
+      $size = 1024;
+    }
+    elsif ($columnType eq 'decimal') {
+      $size = 1024;
+    }
+    elsif ($columnType eq 'float') {
+      $size = 1024;
+    }
+    elsif ($columnType eq 'double') {
+      $size = 1024;
     }
   }
   return $size;

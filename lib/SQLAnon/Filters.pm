@@ -91,13 +91,13 @@ sub addressWithSuffix {
   my $adr = SQLAnon::Lists::get_value('osoitteet');
   my $r= int(rand(100));
   my $suffix;
-  if    ($r < 25) {
+  if    ($r <= 50) {
     $suffix = int(rand(100));
   }
-  elsif ($r < 50) {
+  elsif ($r <= 75) {
     $suffix = int(rand(100)) . ' ' . uc(sprintf("%c", 65+rand(25)));
   }
-  elsif ($r < 75) {
+  elsif ($r <= 100) {
     $suffix = int(rand(100)) . ' ' . uc(sprintf("%c", 65+rand(25))) . ' ' . int(rand(100));
   }
   return join(' ',$adr,$suffix);
