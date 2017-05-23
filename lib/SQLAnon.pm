@@ -4,9 +4,10 @@ use autodie;
 $Carp::Verbose = 'true'; #die with stack trace
 use Try::Tiny;
 use Scalar::Util qw(blessed);
-use utf8;
+#use utf8; #See. head3 UTF-8 handling
 binmode STDOUT, ":utf8";
-binmode STDIN, ":utf8";
+binmode STDERR, ":utf8";
+#binmode STDIN, ":utf8"; #See. head3 UTF-8 handling
 
 package SQLAnon;
 
@@ -29,6 +30,11 @@ my $l = bless({}, 'SQLAnon::Logger');
 =head2 SYNOPSIS
 
 MariaDB/MySQL mysqldump-tool SQL anonymizer
+
+=head3 UTF-8 handling
+
+Since the DB dump can/will contain binary data, and encoding/decoding binary data which is not supposed to be UTF-8, can damage it,
+work with input/output in :raw-encoding
 
 =cut
 
@@ -308,7 +314,7 @@ sub _dispatchValueFinder {
   if ($rule->{dispatch}) {
     $dispatchType = 'dispatch';
     my $closure = eval $rule->{ 'dispatch' };
-    $newVal = $closure->();
+    $newVal = $closure->(@_);
     $l->logdie("In anonymization rule for table '$tableName', column '$columnName', when compiling custom code injection, got the following error:    $@") if $@;
   }
   elsif ($rule->{filter}) {
@@ -432,7 +438,8 @@ sub getIOHandles {
     $inputStream = $c->dbBackupFile;
   }
   if ($inputStream ne '-') {
-    open($IN, "<:encoding(UTF-8)", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
+    #open($IN, "<:encoding(UTF-8)", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
+    open($IN, "<:raw", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
   }
   else {
     $IN = *STDIN;
@@ -441,7 +448,8 @@ sub getIOHandles {
     $outputStream = $c->outputFile;
   }
   if ($outputStream ne '-') {
-    open($OUT, ">:encoding(UTF-8)", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
+    #open($OUT, ">:encoding(UTF-8)", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
+    open($OUT, ">:raw", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
   }
   else {
     $OUT = *STDOUT;

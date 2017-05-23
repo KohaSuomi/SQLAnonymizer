@@ -1,5 +1,5 @@
 use Modern::Perl;
-use utf8;
+#use utf8;
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 use autodie;

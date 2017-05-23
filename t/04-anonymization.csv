@@ -15,3 +15,5 @@ borrowers, dateofbirth,    dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filt
 message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
 message_queue, to_address, "sub { return 'nobody@example.com'; }"
 
+binaryblob, description,   "sub { return $_[2]->[$_[3]]; }", #Pick the current index from the array of values in the INSERT-statement's value group
+binaryblob, biblob,        "sub { return $_[2]->[$_[3]]; }"

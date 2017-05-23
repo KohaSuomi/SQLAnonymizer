@@ -82,6 +82,31 @@ INSERT INTO `message_queue` VALUES (1,"This is a test content\nThis is lke any o
 /*!40000 ALTER TABLE `message_queue` ENABLE KEYS */;
 UNLOCK TABLES;
 
+--
+-- Table structure for table `binaryblob`
+--
+
+DROP TABLE IF EXISTS `binaryblob`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `binaryblob` (
+  `bin_id` int(11) NOT NULL AUTO_INCREMENT,
+  `description` text COLLATE utf8_unicode_ci,
+  `biblob` blob,
+  PRIMARY KEY (`binaryblob`),
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `binaryblob`
+--
+
+LOCK TABLES `binaryblob` WRITE;
+/*!40000 ALTER TABLE `binaryblob` DISABLE KEYS */;
+INSERT INTO `binaryblob` VALUES (1,'Binary data mess','x89PNG\n\\n\0\0\0\nIHDR\0\0\0x8C\0\0\0xC9\0\0\0~7MxB6\0\0 \0IDATxx9C4xBBxD9xCE-Yx92xAD5xCClxCExE9xEExABxFDx9BxDDDx93xD9Tex9CxAARx9DxBAxE0x80@xB8Fx82$.x8Ex84G\\xF2<x80\0QTQx8D*+xA32xA3xD9xB1x9BxBF]ky7xA75\\xECxC2`xCAxE5Sf6|x8CxCF蛿xFD_xCBfB]xBBx9CxE6xAEDf11zxC7y}xFAn}xB1xD9ݼ|AxF23x84AxC4xA5(@H\\nxA8xF3xE6M@\	Lā\0@HxFFxFFC\0xxE2xA1xA1xA7xB0xECPv}2x9B$2xA5-xA5x88xE1x98Cg&fxF3Z<*Ñn@xACުxA3xE1x94xCCxF8iY>x9CxEEOxA7uVDxAFxAExBExxF5xF9x90zPsx840x8BTx95\0\\nx88x907+x80xD');
+/*!40000 ALTER TABLE `binaryblob` ENABLE KEYS */;
+UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

@@ -1,5 +1,5 @@
 use Modern::Perl;
-use utf8;
+#use utf8;
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 use autodie;
@@ -42,7 +42,8 @@ sub loadAnonymizationRules {
   $l->debug("Loading anonymization rules from '$anonymizationRulesFile'");
 
   my $lists = SQLAnon::Lists::getFakeNameLists();
-  open(my $fh, "<:encoding(UTF-8)", $anonymizationRulesFile) or $l->logdie("Can't open anonymization rules file '$anonymizationRulesFile': $!");
+  #open(my $fh, "<:encoding(UTF-8)", $anonymizationRulesFile) or $l->logdie("Can't open anonymization rules file '$anonymizationRulesFile': $!");
+  open(my $fh, "<:raw", $anonymizationRulesFile) or $l->logdie("Can't open anonymization rules file '$anonymizationRulesFile': $!");
   my $parser = Text::CSV->new( { binary => 1, allow_whitespace => 1 });
   while(my $row = $parser->getline($fh)) {
     next if (scalar(@$row) <= 1);
