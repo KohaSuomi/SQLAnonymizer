@@ -71,4 +71,28 @@ subtest "SQLAnon::Filters::addressWithSuffix", sub {
 
 
 
+subtest "SQLAnon::Filters->killIfTimestampOlderThanYear", sub {
+  my ($oldVal, $val);
+  my $kill = '!KILL!';
+  eval {
+    $SQLAnon::Filters::year = 2017;
+    $SQLAnon::Filters::mon = 4; #Starts from 0
+
+    $oldVal = '2016-05-05T23:44:55';
+    is(SQLAnon::Filters->killIfTimestampOlderThanYear('borrowers', 'address', [$oldVal], 0), $oldVal,
+       'timestamp not older than year');
+
+    $oldVal = '2015-12-05';
+    is(SQLAnon::Filters->killIfTimestampOlderThanYear('borrowers', 'address', [$oldVal], 0), $kill,
+       'timestamp kills');
+
+    $oldVal = '2017-08-05';
+    is(SQLAnon::Filters->killIfTimestampOlderThanYear('borrowers', 'address', [$oldVal], 0), $oldVal,
+       'timestamp not older than year');
+  };
+  ok(0, $@) if $@;
+};
+
+
+
 done_testing;

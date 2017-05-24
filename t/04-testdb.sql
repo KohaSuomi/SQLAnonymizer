@@ -59,7 +59,7 @@ CREATE TABLE `borrowers` (
 
 LOCK TABLES `borrowers` WRITE;
 /*!40000 ALTER TABLE `borrowers` DISABLE KEYS */;
-INSERT INTO `borrowers` VALUES (1,'23529000445172','Daniels','Tanya','Mrs','☻☻☻☻','2035 Library Rd.', NULL,'(212) 555-1212','1966-10-14','MPL','42b29d0771f3b7ef','23529000445172',NULL),(2,'23529000105040','Dillon','Eva','Ms','Nightrider','8916 Library Rd.','harrier@example.com','(212) 555-1212','1952-04-03','MPL','42b29d0771f3b7ef','23529000105040','This is a note');
+INSERT INTO `borrowers` VALUES (1,'23529000445172','Daniels','Tanya','Mrs','☻☻☻☻','2035 Library Rd.', NULL,'(212) 555-1212','1966-10-14','MPL','42b29d0771f3b7ef','23529000445172',NULL),(2,'23529000105040','Dillon','Eva','Ms','Nightrider','8916 Library Rd.','harrier@example.com','(212) 555-1212','1952-04-03','MPL','42b29d0771f3b7ef','23529000105040','This is a note'),(3,'23529000105043','Meikäläinen','Maija','Ms','Yökastelija','8916 Library Rd.','kastelu@example.com','','1952-04-03','MPL','42b29d0771f3b7ef','23529000105040','This is a note');
 /*!40000 ALTER TABLE `borrowers` ENABLE KEYS */;
 UNLOCK TABLES;
 

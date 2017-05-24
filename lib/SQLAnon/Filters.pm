@@ -43,6 +43,7 @@ All filters defined here must follow the same calling pattern:
 
 =cut
 
+our ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
 #Preserve year
 sub dateOfBirthAnonDayMonth {
@@ -101,6 +102,27 @@ sub addressWithSuffix {
     $suffix = int(rand(100)) . ' ' . uc(sprintf("%c", 65+rand(25))) . ' ' . int(rand(100));
   }
   return join(' ',$adr,$suffix);
+}
+
+=head2 killIfTimestampOlderThanYear
+
+!KILL!s any lines (value groups) that have the given column older than 1 year from NOW()
+
+=cut
+
+sub killIfTimestampOlderThanYear {
+  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+
+  if ($columnVals->[$colIndex] =~ /(\d\d\d\d)-(\d\d)-(\d\d)/) {
+    my $dYear = $year - $1;      #now - then
+    return '!KILL!' if $dYear > 1;
+    my $dMonth = ($mon+1) - $2;  #now - then
+    return '!KILL!' if $dMonth > 0;
+    return $columnVals->[$colIndex];
+  }
+  else {
+    $l->logdie("Filtering table '$tableName', column '$columnName' is not a parseable date YYYY-MM-DD");
+  }
 }
 
 1;

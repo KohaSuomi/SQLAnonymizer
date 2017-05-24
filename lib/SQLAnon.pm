@@ -148,12 +148,19 @@ sub inside_insert {
       #}
 
       # replace selected columns with anon value
+      my ($kill);
       map {
         my $collumn = getColumnNameByIndex($insert_table_name, $_); #$column and $column_name already conflict with global scope :(
         my $old_val = $columns->[$_];
         $l->trace("Table '$insert_table_name', column '$collumn', old_val '$old_val'") if $l->is_trace;
         my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, $columns, $_ );
-        if ($old_val ne 'NULL' ) { # only anonymize if not null
+
+        if ($new_val eq '!KILL!') {
+          $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', now is ☯KILL:ed") if $l->is_debug;
+          pushToAnonValStash($insert_table_name, $i, $collumn, $new_val);
+          $kill = 1; #Instruct this value group to be removed from the DB dump
+        }
+        elsif ($old_val ne 'NULL' ) { # only anonymize if not null
 
           $columns->[$_] = _trimValToFitColumn($insert_table_name, $collumn, $old_val, $new_val);
 
@@ -166,7 +173,12 @@ sub inside_insert {
         }
       } _get_anon_col_index($insert_table_name);
 
-      $lines->[$i] = recomposeValueGroup($insert_table_name, $columns, $metaInfos);
+      if (not($kill)) {
+        $lines->[$i] = recomposeValueGroup($insert_table_name, $columns, $metaInfos);
+      }
+      else {
+        $lines->[$i] = undef;
+      }
     }
     # reconstunct entire insert statement and print out
     print $OUT recomposeInsertStatement($start_of_string, $lines);
@@ -214,7 +226,9 @@ sub decomposeInsertStatement {
 sub recomposeInsertStatement {
   my ($insertPrefix, $valueStrings) = @_;
 
-  return $insertPrefix . join('),(', @$valueStrings) . ");\n";
+  my @v = grep {defined($_)} @$valueStrings; #remove ☯KILL:ed values
+
+  return $insertPrefix . join('),(', @v) . ");\n";
 }
 
 =head2 decomposeValueGroup
@@ -308,6 +322,7 @@ Find out how to get the anonymized value and get it
 my $filterDispatcher = bless({}, 'SQLAnon::Filters');
 sub _dispatchValueFinder {
   my ($tableName, $columnName, $columnValues, $index) = @_;
+  my $oldVal = $columnValues->[$index];
   my $rule = SQLAnon::AnonRules::getRule( $tableName, $columnName );
   $l->logdie("Anonymization rule not found for table '$tableName', column '$columnName'. We shouldn't even need to ask for it? Why does this happen?") unless $rule;
 
@@ -432,6 +447,7 @@ Store the anonymized values to the stash so we can inspect what happened afterwa
 =cut
 
 sub pushToAnonValStash {
+  return undef unless($ENV{SQLAnonMODE} eq 'testing');
   my ($tableName, $insertRowIndex, $columnName, $val) = @_;
   $anonValStash{$tableName}[$insertRowIndex]{$columnName} = $val;
 }

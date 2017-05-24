@@ -86,3 +86,5 @@ z3950servers, userid,      random
 z3950servers, password,    random
 
 systempreferences, value,  kohaSystempreferences()
+
+action_logs, timestamp,    killIfTimestampOlderThanYear()

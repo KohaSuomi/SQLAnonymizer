@@ -3,7 +3,7 @@ borrowers, surname,        sukunimet
 borrowers, firstname,      etunimet
 borrowers, othernames,     "sub { return $_[2]->[$_[3]]; }", #Pick the current index from the array of values in the INSERT-statement's value group
 borrowers, title,          adjektiivit
-borrowers, email,          "sub { return 'nobody@example.com'; }"
+borrowers, email,          "sub { return '!KILL!' if $oldVal =~ /^harrier/; return 'nobody@example.com'; }", #Remove all rows with harrier emails, others anonymize
 borrowers, phone,          "sub { return '000-000 0000'; }"
 borrowers, userid,         adjektiivit
 borrowers, opacnote,       quotes
@@ -15,5 +15,5 @@ borrowers, dateofbirth,    dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filt
 message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
 message_queue, to_address, "sub { return 'nobody@example.com'; }"
 
-binaryblob, description,   "sub { return $_[2]->[$_[3]]; }", #Pick the current index from the array of values in the INSERT-statement's value group
-binaryblob, biblob,        "sub { return $_[2]->[$_[3]]; }"
+binaryblob, description,   "sub { return $oldVal; }", #Pick the current index from the array of values in the INSERT-statement's value group
+binaryblob, biblob,        "sub { return $oldVal; }"
