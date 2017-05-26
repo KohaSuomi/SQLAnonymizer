@@ -34,7 +34,6 @@ Loads and accesses anonymizer fake name lists
 
 my %anon_data;
 my %anon_data_iterator;
-my %seen; #Track anonymized random strings, so same strings are anonymized using the same random word
 
 my $isCommentRegexp = qr/^#/;
 sub loadFakeNameLists {
@@ -131,10 +130,7 @@ If fake name lists are disbled with the fakeNameListMaxSize == 0, returns ''
 sub get_value {
   my ($type, $oldVal) = @_;
   my $value;
-  if($type eq 'random') {
-    $value = random_string();
-  }
-  elsif($type eq 'preserve') {
+  if($type eq 'preserve') {
     $value = $oldVal;
   }
   elsif($anon_data{$type}) {
@@ -146,16 +142,6 @@ sub get_value {
     $l->logdie("Unknown fake name list '$type', old value '$oldVal'!");
   }
   return $value;
-}
-
-sub random_string {
-  my @chars = ("A".."Z", "a".."z");
-  my $string;
-  while(1) {
-    $string .= $chars[ rand @chars ] for 1..8;
-     last if ! $seen{$string};
-  }
-  return $string;
 }
 
 1;

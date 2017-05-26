@@ -11,7 +11,7 @@ binmode(STDIN, ":utf8");
 use Test::More;
 use Test::MockModule;
 
-
+use Time::HiRes;
 
 use SQLAnon::Filters;
 use SQLAnon::Lists;
@@ -89,6 +89,42 @@ subtest "SQLAnon::Filters->killIfTimestampOlderThanYear", sub {
     $oldVal = '2017-08-05';
     is(SQLAnon::Filters->killIfTimestampOlderThanYear('borrowers', 'address', [$oldVal], 0), $oldVal,
        'timestamp not older than year');
+  };
+  ok(0, $@) if $@;
+};
+
+
+
+subtest "SQLAnon::Filters->randomString", sub {
+  my ($oldVal, $val, $val2);
+
+  eval {
+    $oldVal = '167A001234';
+    ok($val = SQLAnon::Filters->randomString('borrowers', 'cardnumber', [$oldVal], 0),
+       'Given a cardnumber, we receive a anonymized string');
+    is(length($val), $SQLAnon::Filters::stringLength,
+       'With correct length');
+
+    ok($val2 = SQLAnon::Filters->randomString('borrowers', 'cardnumber', [$oldVal], 0),
+       'Given the same cardnumber again, we receive a anonymized string');
+    is($val, $val2,
+       'And the anonymized strings are the same, because the source strings are the same');
+
+    $oldVal = '167A004321';
+    ok($val = SQLAnon::Filters->randomString('borrowers', 'cardnumber', [$oldVal], 0),
+       'Given a new cardnumber, we receive a anonymized string');
+    isnt($val, $val2,
+       'And the anonymized strings are different, because the source strings are different');
+
+
+    ##Performance test
+    my $start = Time::HiRes::time;
+    for (0..10000) {
+      SQLAnon::Filters->randomString('borrowers', 'cardnumber', [rand(9999)], 0);
+    }
+    my $dur = Time::HiRes::time - $start;
+    my $threshold = 100;
+    ok($dur < $threshold, "Runtime '$dur' less than '$threshold'. Performance kinda ok'ish");
   };
   ok(0, $@) if $@;
 };

@@ -125,4 +125,45 @@ sub killIfTimestampOlderThanYear {
   }
 }
 
+=head2 randomString
+
+@RETURNS String, A random alphanumeric String of 16 characters
+
+=cut
+
+my %randomStringSeen; #Track anonymized random strings, so same strings are anonymized using the same random string
+my %randomStringUsed; #Track anonymized strings, so we don't accidentally give the same anonymization multiple times for different source strings
+my @randomStringChars = ("A".."Z", "a".."z", 0..9); #Which characters are allowed for anonymization
+our $stringLength = 16;
+sub randomString_slower_algorithm {
+  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+  my $oldVal = $columnVals->[$colIndex];
+  return $randomStringSeen{$oldVal} if $randomStringSeen{$oldVal}; #If this source string is already anonymized, use the same anonymization
+
+  my $string;
+  my @sb;
+  do {
+    $sb[$_] = $randomStringChars[ int(rand(@randomStringChars)) ] for 0..($stringLength-1);
+    $string = join '', @sb;
+  } while($randomStringUsed{$string}); #Do while this random string is unique
+
+  $randomStringSeen{$oldVal} = $string; #Preserve a link from old value to the anonymized value
+  $randomStringUsed{$string} = 1; #Mark this random string as used
+  return $string;
+}
+sub randomString { #The same string randomization using another algorithm
+  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+  my $oldVal = $columnVals->[$colIndex];
+  return $randomStringSeen{$oldVal} if $randomStringSeen{$oldVal}; #If this source string is already anonymized, use the same anonymization
+
+  my $string = '';
+  do {
+    $string .= $randomStringChars[ int(rand(@randomStringChars)) ] for 0..($stringLength-1);
+  } while($randomStringUsed{$string}); #Do while this random string is unique
+
+  $randomStringSeen{$oldVal} = $string; #Preserve a link from old value to the anonymized value
+  $randomStringUsed{$string} = 1; #Mark this random string as used
+  return $string;
+}
+
 1;

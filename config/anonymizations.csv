@@ -1,14 +1,14 @@
 borrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrowers, surname,            etunimet
 borrowers, firstname,          sukunimet
-borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
+borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
 borrowers, title,              adjektiivit
 borrowers, email,              "sub { return 'nobody@example.com'; }"
 borrowers, phone,              "sub { return '000-000 0000'; }"
 borrowers, mobile,             "sub { return '000-000 0000'; }"
 borrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrowers, cardnumber,         random
+borrowers, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrowers, cardnumber,         randomString()
 borrowers, opacnote,           quotes
 borrowers, borrowernotes,      quotes
 borrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
@@ -28,14 +28,14 @@ borrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 deletedborrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 deletedborrowers, surname,            etunimet
 deletedborrowers, firstname,          sukunimet
-deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
+deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
 deletedborrowers, title,              adjektiivit
 deletedborrowers, email,              "sub { return 'nobody@example.com'; }"
 deletedborrowers, phone,              "sub { return '000-000 0000'; }"
 deletedborrowers, mobile,             "sub { return '000-000 0000'; }"
 deletedborrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-deletedborrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-deletedborrowers, cardnumber,         random
+deletedborrowers, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+deletedborrowers, cardnumber,         randomString()
 deletedborrowers, opacnote,           quotes
 deletedborrowers, borrowernotes,      quotes
 deletedborrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
@@ -55,14 +55,14 @@ deletedborrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 borrower_modifications, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrower_modifications, surname,            etunimet
 borrower_modifications, firstname,          sukunimet
-borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
+borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
 borrower_modifications, title,              adjektiivit
 borrower_modifications, email,              "sub { return 'nobody@example.com'; }"
 borrower_modifications, phone,              "sub { return '000-000 0000'; }"
 borrower_modifications, mobile,             "sub { return '000-000 0000'; }"
 borrower_modifications, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrower_modifications, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrower_modifications, cardnumber,         random
+borrower_modifications, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrower_modifications, cardnumber,         randomString()
 borrower_modifications, opacnote,           quotes
 borrower_modifications, borrowernotes,      quotes
 borrower_modifications, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
