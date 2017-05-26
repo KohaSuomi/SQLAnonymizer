@@ -447,7 +447,7 @@ Store the anonymized values to the stash so we can inspect what happened afterwa
 =cut
 
 sub pushToAnonValStash {
-  return undef unless($ENV{SQLAnonMODE} eq 'testing');
+  return undef unless($ENV{SQLAnonMODE} && $ENV{SQLAnonMODE} eq 'testing');
   my ($tableName, $insertRowIndex, $columnName, $val) = @_;
   $anonValStash{$tableName}[$insertRowIndex]{$columnName} = $val;
 }
