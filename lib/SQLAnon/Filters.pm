@@ -47,18 +47,20 @@ our ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
 #Preserve year
 sub dateOfBirthAnonDayMonth {
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
-  $columnVals->[ $colIndex ] =~ s/-\d\d-\d\d/-01-01/;
-  return $columnVals->[ $colIndex ];
+  my ($class, $tableName, $columnName, $columnVals) = @_;
+  $columnVals->{ $columnName } =~ s/-\d\d-\d\d/-01-01/;
+  return $columnVals->{ $columnName };
 }
 
 sub kohaSystempreferences {
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+  my ($class, $tableName, $columnName, $columnVals) = @_;
 
   ##Firstly get the variable
-  my $variableI = SQLAnon::getColumnIndexByName($tableName, 'variable');
-  $l->logdie("Filtering table '$tableName', column '$columnName', column 'variable' not found! variable-col is mandatory to know which syspref we are handling and what specific anonymization rules to apply.") unless defined($variableI);
-  my $variable = $columnVals->[ $variableI ];
+  my $variable = $columnVals->{ 'variable' };
+  unless ($variable) {
+    $l->warn("Filtering table '$tableName', column '$columnName', column 'variable' not found! variable-col is mandatory to know which syspref we are handling and what specific anonymization rules to apply.");
+    return '';
+  }
   $l->debug("Filtering table '$tableName', column '$columnName', variable='$variable'");
 
   if    ($variable eq 'VaaraAcqVendorConfigurations') {
@@ -76,7 +78,7 @@ sub kohaSystempreferences {
   }
 =cut
   else {
-    return $columnVals->[ $colIndex ]; #No anonymization needed, return the old value
+    return $columnVals->{ $columnName }; #No anonymization needed, return the old value
   }
 }
 
@@ -87,7 +89,7 @@ Takes an address from osoitteet.csv and suffixes it with random numbering inform
 =cut
 
 sub addressWithSuffix {
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+  my ($class, $tableName, $columnName, $columnVals) = @_;
 
   my $adr = SQLAnon::Lists::get_value('osoitteet');
   my $r= int(rand(100));
@@ -111,14 +113,14 @@ sub addressWithSuffix {
 =cut
 
 sub killIfTimestampOlderThanYear {
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
+  my ($class, $tableName, $columnName, $columnVals) = @_;
 
-  if ($columnVals->[$colIndex] =~ /(\d\d\d\d)-(\d\d)-(\d\d)/) {
+  if ($columnVals->{$columnName} =~ /(\d\d\d\d)-(\d\d)-(\d\d)/) {
     my $dYear = $year - $1;      #now - then
     return '!KILL!' if $dYear > 1;
     my $dMonth = ($mon+1) - $2;  #now - then
     return '!KILL!' if $dMonth > 0;
-    return $columnVals->[$colIndex];
+    return $columnVals->{$columnName};
   }
   else {
     $l->logdie("Filtering table '$tableName', column '$columnName' is not a parseable date YYYY-MM-DD");
@@ -136,8 +138,8 @@ my %randomStringUsed; #Track anonymized strings, so we don't accidentally give t
 my @randomStringChars = ("A".."Z", "a".."z", 0..9); #Which characters are allowed for anonymization
 our $stringLength = 16;
 sub randomString_slower_algorithm {
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
-  my $oldVal = $columnVals->[$colIndex];
+  my ($class, $tableName, $columnName, $columnVals) = @_;
+  my $oldVal = $columnVals->{$columnName};
   return $randomStringSeen{$oldVal} if $randomStringSeen{$oldVal}; #If this source string is already anonymized, use the same anonymization
 
   my $string;
@@ -152,8 +154,8 @@ sub randomString_slower_algorithm {
   return $string;
 }
 sub randomString { #The same string randomization using another algorithm
-  my ($class, $tableName, $columnName, $columnVals, $colIndex) = @_;
-  my $oldVal = $columnVals->[$colIndex];
+  my ($class, $tableName, $columnName, $columnVals) = @_;
+  my $oldVal = $columnVals->{$columnName};
   return $randomStringSeen{$oldVal} if $randomStringSeen{$oldVal}; #If this source string is already anonymized, use the same anonymization
 
   my $string = '';

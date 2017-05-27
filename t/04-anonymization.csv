@@ -1,19 +1,19 @@
-borrowers, borrowernumber, preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
-borrowers, surname,        sukunimet
-borrowers, firstname,      etunimet
-borrowers, othernames,     "sub { return $_[2]->[$_[3]]; }", #Pick the current index from the array of values in the INSERT-statement's value group
-borrowers, title,          adjektiivit
-borrowers, email,          "sub { return '!KILL!' if $oldVal =~ /^harrier/; return 'nobody@example.com'; }", #Remove all rows with harrier emails, others anonymize
-borrowers, phone,          "sub { return '000-000 0000'; }"
-borrowers, userid,         adjektiivit
-borrowers, opacnote,       quotes
-borrowers, password,       "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
-borrowers, address,        addressWithSuffix()
-borrowers, dateofbirth,    dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+borrowers, borrowernumber, 10,   preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+borrowers, surname,        250,  sukunimet
+borrowers, firstname,      250,  etunimet
+borrowers, othernames,     250,  "sub { return $_[2]->{$_[1]}; }", #Pick the current index from the array of values in the INSERT-statement's value group
+borrowers, title,          250,  adjektiivit
+borrowers, email,          250,  "sub { return '!KILL!' if $oldVal =~ /^harrier/; return 'nobody@example.com'; }", #Remove all rows with harrier emails, others anonymize
+borrowers, phone,          250,  "sub { return '000-000 0000'; }"
+borrowers, userid,         70,   adjektiivit
+borrowers, opacnote,       500,  quotes
+borrowers, password,       70,   "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+borrowers, address,        250,  addressWithSuffix()
+borrowers, dateofbirth,    30,   dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
 
 
-message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
-message_queue, to_address, "sub { return 'nobody@example.com'; }"
+message_queue, content,    250,  "sub { return 'Ave Imperator, morituri te salutant'; }"
+message_queue, to_address, 250,  "sub { return 'nobody@example.com'; }"
 
-binaryblob, description,   "sub { return $oldVal; }", #Pick the current index from the array of values in the INSERT-statement's value group
-binaryblob, biblob,        "sub { return $oldVal; }"
+binaryblob, description,   250,  "sub { return $oldVal; }", #Pick the current index from the array of values in the INSERT-statement's value group
+binaryblob, biblob,        1000, "sub { return $oldVal; }"

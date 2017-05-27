@@ -1,85 +1,91 @@
-borrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
-borrowers, surname,            etunimet
-borrowers, firstname,          sukunimet
-borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
-borrowers, title,              adjektiivit
-borrowers, email,              "sub { return 'nobody@example.com'; }"
-borrowers, phone,              "sub { return '000-000 0000'; }"
-borrowers, mobile,             "sub { return '000-000 0000'; }"
-borrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrowers, opacnote,           quotes
-borrowers, borrowernotes,      quotes
-borrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
-borrowers, address,            addressWithSuffix()
-borrowers, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
-borrowers, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
-borrowers, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
-borrowers, contactname,        sukunimet
-borrowers, contacttitle,       adjektiivit
-borrowers, contactfirstname,   etunimet
-borrowers, contactnote,        quotes
-borrowers, altcontactfirstname,etunimet
-borrowers, altcontactsurname,  sukunimet
-borrowers, altcontactaddress1, addressWithSuffix()
-borrowers, altcontactphone,    "sub { return '000-000 0000'; }"
+borrowers, borrowernumber,     10,   preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+borrowers, surname,            250,  etunimet
+borrowers, firstname,          250,  sukunimet
+borrowers, othernames,         250,  "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrowers, title,              250,  adjektiivit
+borrowers, email,              250,  "sub { return 'nobody@example.com'; }"
+borrowers, phone,              250,  "sub { return '000-000 0000'; }"
+borrowers, mobile,             250,  "sub { return '000-000 0000'; }"
+borrowers, smsalertnumber,     250,  "sub { return '000-000 0000'; }"
+borrowers, userid,             75,   "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrowers, cardnumber,         30,   randomString()
+borrowers, opacnote,           500,  quotes
+borrowers, borrowernotes,      500,  quotes
+borrowers, password,           60,   "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+borrowers, address,            100,  addressWithSuffix()
+borrowers, dateenrolled,       30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+borrowers, dateexpiry,         30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+borrowers, dateofbirth,        30,   dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+borrowers, contactname,        250,  sukunimet
+borrowers, contacttitle,       250,  adjektiivit
+borrowers, contactfirstname,   250,  etunimet
+borrowers, contactnote,        500,  quotes
+borrowers, altcontactfirstname,250,  etunimet
+borrowers, altcontactsurname,  250,  sukunimet
+borrowers, altcontactaddress1, 250,  addressWithSuffix()
+borrowers, altcontactphone,    50,   "sub { return '000-000 0000'; }"
 
-deletedborrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
-deletedborrowers, surname,            etunimet
-deletedborrowers, firstname,          sukunimet
-deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
-deletedborrowers, title,              adjektiivit
-deletedborrowers, email,              "sub { return 'nobody@example.com'; }"
-deletedborrowers, phone,              "sub { return '000-000 0000'; }"
-deletedborrowers, mobile,             "sub { return '000-000 0000'; }"
-deletedborrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-deletedborrowers, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-deletedborrowers, opacnote,           quotes
-deletedborrowers, borrowernotes,      quotes
-deletedborrowers, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
-deletedborrowers, address,            addressWithSuffix()
-deletedborrowers, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
-deletedborrowers, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
-deletedborrowers, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
-deletedborrowers, contactname,        sukunimet
-deletedborrowers, contacttitle,       adjektiivit
-deletedborrowers, contactfirstname,   etunimet
-deletedborrowers, contactnote,        quotes
-deletedborrowers, altcontactfirstname,etunimet
-deletedborrowers, altcontactsurname,  sukunimet
-deletedborrowers, altcontactaddress1, addressWithSuffix()
-deletedborrowers, altcontactphone,    "sub { return '000-000 0000'; }"
+deletedborrowers, borrowernumber,     10,   preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+deletedborrowers, surname,            250,  etunimet
+deletedborrowers, firstname,          250,  sukunimet
+deletedborrowers, othernames,         250,  "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+deletedborrowers, title,              250,  adjektiivit
+deletedborrowers, email,              250,  "sub { return 'nobody@example.com'; }"
+deletedborrowers, phone,              250,  "sub { return '000-000 0000'; }"
+deletedborrowers, mobile,             250,  "sub { return '000-000 0000'; }"
+deletedborrowers, smsalertnumber,     250,  "sub { return '000-000 0000'; }"
+deletedborrowers, userid,             75,   "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+deletedborrowers, cardnumber,         30,   randomString()
+deletedborrowers, opacnote,           500,  quotes
+deletedborrowers, borrowernotes,      500,  quotes
+deletedborrowers, password,           60,   "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+deletedborrowers, address,            100,  addressWithSuffix()
+deletedborrowers, dateenrolled,       30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+deletedborrowers, dateexpiry,         30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+deletedborrowers, dateofbirth,        30,   dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+deletedborrowers, contactname,        250,  sukunimet
+deletedborrowers, contacttitle,       250,  adjektiivit
+deletedborrowers, contactfirstname,   250,  etunimet
+deletedborrowers, contactnote,        500,  quotes
+deletedborrowers, altcontactfirstname,250,  etunimet
+deletedborrowers, altcontactsurname,  250,  sukunimet
+deletedborrowers, altcontactaddress1, 250,  addressWithSuffix()
+deletedborrowers, altcontactphone,    50,   "sub { return '000-000 0000'; }"
 
-borrower_modifications, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
-borrower_modifications, surname,            etunimet
-borrower_modifications, firstname,          sukunimet
-borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(9999)); }"
-borrower_modifications, title,              adjektiivit
-borrower_modifications, email,              "sub { return 'nobody@example.com'; }"
-borrower_modifications, phone,              "sub { return '000-000 0000'; }"
-borrower_modifications, mobile,             "sub { return '000-000 0000'; }"
-borrower_modifications, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrower_modifications, userid,             "sub { return SQLAnon::Lists::get_value('varaustunnus') . sprintf('%c%c', 65+rand(25), 65+rand(25)); }"
-borrower_modifications, opacnote,           quotes
-borrower_modifications, borrowernotes,      quotes
-borrower_modifications, password,           "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
-borrower_modifications, address,            addressWithSuffix()
-borrower_modifications, dateenrolled,       preserve, #because of the borrowernumber link, no reason to obfuscate
-borrower_modifications, dateexpiry,         preserve, #because of the borrowernumber link, no reason to obfuscate
-borrower_modifications, dateofbirth,        dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
-borrower_modifications, contactname,        sukunimet
-borrower_modifications, contacttitle,       adjektiivit
-borrower_modifications, contactfirstname,   etunimet
-borrower_modifications, contactnote,        quotes
-borrower_modifications, altcontactfirstname,etunimet
-borrower_modifications, altcontactsurname,  sukunimet
-borrower_modifications, altcontactaddress1, addressWithSuffix()
-borrower_modifications, altcontactphone,    "sub { return '000-000 0000'; }"
+borrower_modifications, borrowernumber,     10,   preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
+borrower_modifications, surname,            250,  etunimet
+borrower_modifications, firstname,          250,  sukunimet
+borrower_modifications, othernames,         250,  "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrower_modifications, title,              250,  adjektiivit
+borrower_modifications, email,              250,  "sub { return 'nobody@example.com'; }"
+borrower_modifications, phone,              250,  "sub { return '000-000 0000'; }"
+borrower_modifications, mobile,             250,  "sub { return '000-000 0000'; }"
+borrower_modifications, smsalertnumber,     250,  "sub { return '000-000 0000'; }"
+borrower_modifications, userid,             75,   "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrower_modifications, cardnumber,         30,   randomString()
+borrower_modifications, opacnote,           500,  quotes
+borrower_modifications, borrowernotes,      500,  quotes
+borrower_modifications, password,           60,   "sub { return '$6$bmpusw./X$TkzFd8RSlVsPVNtGWmIgDDE9eV.FzK5WM/86EEZ3KtJOlAfwO6YtQLkm/jLQJUCpgdJKU5Ou4kAKiyEitrq/N.'; }"
+borrower_modifications, address,            100,  addressWithSuffix()
+borrower_modifications, dateenrolled,       30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+borrower_modifications, dateexpiry,         30,   preserve, #because of the borrowernumber link, no reason to obfuscate
+borrower_modifications, dateofbirth,        30,   dateOfBirthAnonDayMonth(), #This uses a SQLAnon::Filter to do anonymization. You can extend your own!
+borrower_modifications, contactname,        250,  sukunimet
+borrower_modifications, contacttitle,       250,  adjektiivit
+borrower_modifications, contactfirstname,   250,  etunimet
+borrower_modifications, contactnote,        500,  quotes
+borrower_modifications, altcontactfirstname,250,  etunimet
+borrower_modifications, altcontactsurname,  250,  sukunimet
+borrower_modifications, altcontactaddress1, 250,  addressWithSuffix()
+borrower_modifications, altcontactphone,    50,   "sub { return '000-000 0000'; }"
 
-message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
-message_queue, to_address, "sub { return 'nobody@example.com'; }"
+message_queue, content,    250,  "sub { return 'Ave Imperator, morituri te salutant'; }"
+message_queue, to_address, 250,  "sub { return 'nobody@example.com'; }"
 
-z3950servers, userid,      random
-z3950servers, password,    random
+z3950servers, userid,      255,  randomString()
+z3950servers, password,    255,  randomString()
 
-systempreferences, value,  kohaSystempreferences()
+systempreferences, value,  65535, kohaSystempreferences()
+
+action_logs, timestamp,    30, killIfTimestampOlderThanYear()
+statistics,  datetime,     30, killIfTimestampOlderThanYear()

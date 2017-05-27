@@ -49,7 +49,7 @@ sub loadAnonymizationRules {
     next if (scalar(@$row) <= 1);
     $l->trace("Loading row ".$l->flatten($row)) if $l->is_trace;
 
-    my ($tableName, $columnName, $type) = @$row;
+    my ($tableName, $columnName, $maxSize, $type) = @$row;
 
     my $closure;
     if ($type =~ /^sub\s*\{.+\}$/) {
@@ -64,6 +64,7 @@ sub loadAnonymizationRules {
       _checkRuleTypeFakeNameList($tableName, $columnName, $type, $lists);
       $anon_columns{ $tableName }{ $columnName }{'fakeNameList'} = $type;
     }
+    setMaxSize( $tableName, $columnName, $maxSize );
   }
   unless ($parser->eof) {
     $l->logdie("When parsing anonymization rules from '$anonymizationRulesFile', on row '".$parser->record_number()."' got the error:    ".$parser->error_diag()); #If we didn't reach end of file, throw an error
@@ -103,7 +104,17 @@ sub getAnonymizableColumnNames {
 
 sub getRule {
   my ($tableName, $columnName) = @_;
+  $l->logdie("Anonymization rule not found for table '$tableName', column '$columnName'. We shouldn't even need to ask for it? Why does this happen?") unless $anon_columns{$tableName}{$columnName};
   return $anon_columns{$tableName}{$columnName};
+}
+
+sub setMaxSize {
+  my ($tableName, $columnName, $maxSize) = @_;
+  return getRule($tableName, $columnName)->{maxSize} = $maxSize;
+}
+sub getMaxSize {
+  my ($tableName, $columnName) = @_;
+  return getRule($tableName, $columnName)->{maxSize};
 }
 
 1;

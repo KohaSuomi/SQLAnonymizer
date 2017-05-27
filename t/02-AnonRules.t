@@ -23,21 +23,19 @@ subtest "SQLAnon::AnonRules::loadAnonymizationRules", sub {
 
     ok($rule = SQLAnon::AnonRules::getRule('borrowers', 'title'), 'Got rule for borrower-title');
     is($rule->{fakeNameList}, 'adjektiivit',                      'Rule uses a fake name list');
+    is($rule->{maxSize},      '250',                              'Rule has max size');
 
     ok($rule = SQLAnon::AnonRules::getRule('borrowers', 'dateofbirth'), 'Got rule for borrower-dateofbirth');
-    is($rule->{filter}, 'dateOfBirthAnonDayMonth',                      'Rule uses a filter');
+    is($rule->{filter},       'dateOfBirthAnonDayMonth',                'Rule uses a filter');
+    is($rule->{maxSize},      '30',                                     'Rule has max size');
 
     ok($rule = SQLAnon::AnonRules::getRule('message_queue', 'content'), 'Got rule for message_queue-content');
-    like($rule->{dispatch}, qr/Ave Imperator, morituri te salutant/,    'Rule uses injectable perl code');
+    like($rule->{dispatch},   qr/Ave Imperator, morituri te salutant/,  'Rule uses injectable perl code');
+    is($rule->{maxSize},      '250',                                    'Rule has max size');
 
   };
   ok(0, $@) if $@;
 };
-
-
-
-
-
 
 
 

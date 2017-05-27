@@ -1,6 +1,3 @@
-## This file is part of mysql_anon
-## https://github.com/PhlJns99/mysql_anon
-
 use Modern::Perl;
 use utf8;
 binmode STDOUT, ":utf8";
@@ -98,6 +95,7 @@ $class->new(
     'Text::CSV'                         => '> 0.01',
     'Time::HiRes'                       => '> 0.01',
     'Memoize'                           => '> 0.01',
+    'MySQL::Dump::Parser::XS'           => '> 0.01', #https://github.com/karupanerura/MySQL-Dump-Parser-XS
     'Log::Log4perl'                     => '> 0.01',
     'Params::Validate'                  => '> 0.01',
   },

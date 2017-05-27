@@ -18,6 +18,7 @@ package SQLAnon;
 use Memoize;
 use Data::Dumper;
 use Text::CSV;
+use MySQL::Dump::Parser::XS;
 
 use SQLAnon::AnonRules;
 use SQLAnon::Lists;
@@ -38,24 +39,10 @@ work with input/output in :raw-encoding
 
 =cut
 
-my $parser = Text::CSV->new( { binary => 1, quote_char => "'", escape_char => '\\', keep_meta_info => 1, allow_loose_escapes => 1, always_quote => 1 });
+my $parser = MySQL::Dump::Parser::XS->new;
 
 my $IN; #Input stream
 my $OUT; #Output stream
-
-my $create_table_name;
-my $column_number = 0;
-my $column_name;
-my $inside_create = 0;
-my $insert_table_name;
-my $inside_insert = 0;
-my %table;
-my %table_reverse;
-my %column;
-my %column_reverse;
-my %contains_anon_column;
-my %data_types;   #What data types are each column in each table? ...   table->columnNumber->?type?
-my %column_sizes; #How many characters each column in each table can take? ...   table->columnNumber->?size?
 
 #Tracks all the anonymized values for each table, insert-row and column. This is used afterwards to run automated tests against.
 my %anonValStash; #$anonValStash{$tableName}[insertRowIndex]{$columnName} = $newValue;
@@ -72,30 +59,26 @@ sub anonymize {
   my ($inputStream, $outputStream) = @_;
   ($IN, $OUT) = getIOHandles($inputStream, $outputStream);
 
-  while (<$IN>) {
-    if ($inside_create == 1 && $_ =~ /ENGINE=(InnoDB|MyISAM)/) {
-      $inside_create = 0; # create statement is finished
+  my $prevTable = 'undef';
+  while (my $line = <$IN>) {
+    $line =~ s/\\/\\\\/g; #MySQL::Dump::Parser::XS loses backslashes so we duplicate them
+    my $anonLine; #The $line after anonymization
+    my @rows  = $parser->parse($line);
+    if (@rows) {
+      $l->logdie("Got a bunch of \@rows but no table name, on line $. after table '$prevTable'") unless ($parser->current_target_table());
+      my $tableName = $parser->current_target_table();
+      $prevTable = $tableName;
+      if ($line =~ $inside_insert_regexp) {
+        my $insertPrefix = $1;
+        my $tableName2 = $2;
+        $l->logdie("Parsed table names '$tableName' and '$tableName2' are different???, on line $. after table '$prevTable'") unless ($tableName eq $tableName2);
+        $anonLine = anonymizeTable($insertPrefix, $tableName, \@rows);
+      }
+      else {
+        $l->logdie("Cannot parse INSERT prefix, on line $. table '$tableName'");
+      }
     }
-
-    if ($inside_create == 0 && $_ =~ /^CREATE TABLE `([a-z0-9_]+)` \(/) {
-      create_table($1);
-    }
-
-    if ($inside_create == 1 && $_ =~ /`([A-z0-9_]+)`\s([a-z]+)(?:\((\d+)\))?/ && $_ !~ /CREATE TABLE/) {
-      inside_create($1, $2, $3); # parse create statement to index column positions
-    }
-
-    if($_ =~ $inside_insert_regexp) {
-      inside_insert($1, $2); # anonymize VALUES statement
-    }
-    else {
-      # this line won't be modified so just print it.
-      print $OUT $_;
-    }
-
-    if($inside_insert == 1 && $_ =~ /\);\n/) {
-      $inside_insert = 0; # This insert is finished
-    }
+    print $OUT ($anonLine) ? $anonLine : $line;
   }
 
   close($IN) if ($IN ne *STDIN);
@@ -104,119 +87,54 @@ sub anonymize {
   return 1;
 }
 
-sub create_table {
-  my $table = shift;
-  $create_table_name = $table; #Store current table name
-  $column_number = 0; # new create statement, reset column count
-  $inside_create = 1;
-}
+sub anonymizeTable {
+  my ($insertPrefix, $tableName, $rows) = @_;
+  if(SQLAnon::AnonRules::isTableAnonymizable($tableName)) {
 
-sub inside_create {
-  # process create statment to record ordinal position of columns
-  my ($column, $type, $size) = @_;
-  $size = _getColSize($type, $size);
-  $l->warn("Unknown size for table '$create_table_name' column '$column'") if (not($size) && $l->warn());
-  $column_name = $column;
-  $table{$create_table_name}{$column_name} = $column_number;
-  $table_reverse{$create_table_name}{$column_number} = $column_name;
-  $data_types{$create_table_name}{$column_number} = $type;
-  $column_sizes{$create_table_name}{$column_number} = $size;
-
-  $l->debug("Analyzed table '$create_table_name', column '$column', type '$type', size '$size'");
-
-  $column_number++;
-}
-
-
-sub inside_insert {
-  my ($a1, $a2) = @_;
-  $insert_table_name = $a2;
-  my $start_of_string = $a1;
-  $inside_insert = 1;
-  if(SQLAnon::AnonRules::isTableAnonymizable($insert_table_name)) {
-    my ($insert_table_name, $start_of_string, $lines) = decomposeInsertStatement($_);
-
-    # loop through each line
-    for (my $i=0 ; $i<scalar(@$lines) ; $i++) {
-
-      my ($columns, $metaInfos) = decomposeValueGroup($lines->[$i]);
-
-      # store quote status foreach column
-      #my @quoted;
-      #foreach my $index (0..$#columns) {
-      #  push @quoted, $parser->is_quoted ($index);
-      #}
-
+    # loop through each value group
+    for (my $i=0 ; $i<scalar(@$rows) ; $i++) {
+      my $row = $rows->[$i];
       # replace selected columns with anon value
       my ($kill);
       map {
-        my $collumn = getColumnNameByIndex($insert_table_name, $_); #$column and $column_name already conflict with global scope :(
-        my $old_val = $columns->[$_];
-        $l->trace("Table '$insert_table_name', column '$collumn', old_val '$old_val'") if $l->is_trace;
-        my $new_val = _dispatchValueFinder( $insert_table_name, $collumn, $columns, $_ );
+        my $columnName = $_;
+        my $old_val = $row->{$columnName};
+        $l->logdie("Table '$tableName', column '$columnName' is undefined. Trying to anonymize a column which doesn't exist!") unless(defined($old_val));
+        $l->trace("Table '$tableName', column '$columnName', old_val '$old_val'") if $l->is_trace;
+        my $new_val = _dispatchValueFinder( $tableName, $columnName, $row);
 
         if ($new_val eq '!KILL!') {
-          $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', now is ☯KILL:ed") if $l->is_debug;
-          pushToAnonValStash($insert_table_name, $i, $collumn, $new_val);
+          $l->debug("Table '$tableName', column '$columnName', was '$old_val', now is !KILL!:ed") if $l->is_debug;
+          pushToAnonValStash($tableName, $i, $columnName, $new_val);
           $kill = 1; #Instruct this value group to be removed from the DB dump
         }
         elsif ($old_val ne 'NULL' ) { # only anonymize if not null
 
-          $columns->[$_] = _trimValToFitColumn($insert_table_name, $collumn, $old_val, $new_val);
+          $row->{$columnName} = _trimValToFitColumn($tableName, $columnName, $old_val, $new_val);
 
-          $l->debug("Table '$insert_table_name', column '$collumn', was '$old_val', is '$columns->[$_]'") if $l->is_debug;
-          pushToAnonValStash($insert_table_name, $i, $collumn, $columns->[$_]);
+          $l->debug("Table '$tableName', column '$columnName', was '$old_val', is '".$row->{$columnName}."'") if $l->is_debug;
+          pushToAnonValStash($tableName, $i, $columnName, $row->{$columnName});
         }
         else {
-          $l->debug("Table '$insert_table_name', column '$collumn', is NULL") if $l->is_debug;
-          pushToAnonValStash($insert_table_name, $i, $collumn, $columns->[$_]);
+          $l->debug("Table '$tableName', column '$columnName', is NULL") if $l->is_debug;
+          pushToAnonValStash($tableName, $i, $columnName, $row->{$columnName});
         }
-      } _get_anon_col_index($insert_table_name);
+      } @{SQLAnon::AnonRules::getAnonymizableColumnNames($tableName)};
 
       if (not($kill)) {
-        $lines->[$i] = recomposeValueGroup($insert_table_name, $columns, $metaInfos);
+        $rows->[$i] = recomposeValueGroup($tableName, $row);
       }
       else {
-        $lines->[$i] = undef;
+        $rows->[$i] = undef;
       }
     }
     # reconstunct entire insert statement and print out
-    print $OUT recomposeInsertStatement($start_of_string, $lines);
+    print $OUT recomposeInsertStatement($insertPrefix, $rows);
   }
   else {
     print $OUT $_; # print unmodifed insert
   }
 
-}
-
-=head2 decomposeInsertStatement
-
-Splits a INSERT statement to a list of individual VALUE-groups and the prefixing INSERT stanzas
-
-You can recomposeInsertStatement() using these same @RETURN values.
-
-@PARAM1 String, the complete INSERT statement with VALUES and all.
-@RETURNS LIST of [0] = String, the table name
-                 [1] = String, the start of the INSERT statement without VALUE-groups
-                 [2] = ARRAYRef of VALUE-groups
-
-=cut
-
-sub decomposeInsertStatement {
-  my ($insertStatement) = @_;
-
-  if($insertStatement =~ $inside_insert_regexp) {
-    my $insertPrefix = $1;
-    my $tableName = $2;
-    # split insert statement
-    my @lines = split('\)\s*,\s*\(', $insertStatement);
-    $lines[0] =~ s/\Q$insertPrefix\E//; # remove start of insert string
-    $lines[$#lines] =~ s/\);\n?//; # remove trailing bracket from last line of insert
-    return ($tableName, $insertPrefix, \@lines);
-  }
-  else {
-    $l->logdie("On DB dump line '$.', couldn't parse INSERT statement '$insertStatement'");
-  }
 }
 
 =head2 recomposeInsertStatement
@@ -229,31 +147,6 @@ sub recomposeInsertStatement {
   my @v = grep {defined($_)} @$valueStrings; #remove ☯KILL:ed values
 
   return $insertPrefix . join('),(', @v) . ");\n";
-}
-
-=head2 decomposeValueGroup
-
-Splits a VALUE-group from a INSERT statement to a list of individual column values
-
-You can recomposeValuegroup() using these same @RETURN values.
-
-@PARAM1 String, the complete VALUE-group stanza
-@RETURNS List of [0] = ARRAYRef of column values
-                 [1] = ARRAYRef of column metainfo flags (see. http://search.cpan.org/~makamaka/Text-CSV-1.33/lib/Text/CSV.pm#meta_info)
-
-=cut
-
-sub decomposeValueGroup {
-  my ($valueString) = @_;
-
-  # use Text::CSV to parse the values
-  my $status = $parser->parse($valueString);
-  my @columns = $parser->fields();
-  if($#columns == 0) {
-    $l->logdie("Error parsing .csv-line '$valueString' got Text::CSV status='$status' error: ".$parser->error_input());
-  }
-  my @meta = $parser->meta_info();
-  return (\@columns, \@meta);
 }
 
 sub recomposeValueGroup {
@@ -291,28 +184,6 @@ sub recomposeValueGroup {
   return join(',', @$columns);
 }
 
-=head2 _get_anon_col_index
-
-@RETURNS an array of column ordinal postions for columns that are marked for anonymization
-
-=cut
-
-memoize('_get_anon_col_index');
-sub _get_anon_col_index {
-  my $table_name = shift;
-  my @idx;
-  foreach my $anonColumnName (@{SQLAnon::AnonRules::getAnonymizableColumnNames($table_name)}) {
-    my $idx = getColumnIndexByName($table_name, $anonColumnName);
-    if (defined($idx)) { #Defined is important because index can be 0
-      push(@idx, $idx);
-    }
-    else {
-      $l->warn("No such anonymizable column '$anonColumnName', for table '$table_name'. Do you have a typo in your anonymization configuration?");
-    }
-  }
-  return sort {$a <=> $b} @idx;
-}
-
 =head2 _dispatchValueFinder
 
 Find out how to get the anonymized value and get it
@@ -321,10 +192,9 @@ Find out how to get the anonymized value and get it
 
 my $filterDispatcher = bless({}, 'SQLAnon::Filters');
 sub _dispatchValueFinder {
-  my ($tableName, $columnName, $columnValues, $index) = @_;
-  my $oldVal = $columnValues->[$index];
+  my ($tableName, $columnName, $columnValues) = @_;
+  my $oldVal = $columnValues->{$columnName};
   my $rule = SQLAnon::AnonRules::getRule( $tableName, $columnName );
-  $l->logdie("Anonymization rule not found for table '$tableName', column '$columnName'. We shouldn't even need to ask for it? Why does this happen?") unless $rule;
 
   my ($newVal, $dispatchType);
   if ($rule->{dispatch}) {
@@ -336,11 +206,11 @@ sub _dispatchValueFinder {
   elsif ($rule->{filter}) {
     $dispatchType = 'filter';
     my $filter = $rule->{filter};
-    $newVal = $filterDispatcher->$filter($tableName, $columnName, $columnValues, $index);
+    $newVal = $filterDispatcher->$filter($tableName, $columnName, $columnValues);
   }
   elsif ($rule->{fakeNameList}) {
     $dispatchType = 'fakeNameList';
-    $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList}, $columnValues->[ $index ]);
+    $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList}, $columnValues->{ $columnName });
   }
   else {
     $l->logdie("In anonymization rule for table '$tableName', column '$columnName', dont know how to get the anonymized value using rule '".$l->flatten($rule)."'");
@@ -357,87 +227,8 @@ Make sure the new anonymized value is not too large
 
 sub _trimValToFitColumn {
   my ($tableName, $columnName, $oldVal, $newVal) = @_;
-  my $columnIndex = getColumnIndexByName($tableName, $columnName);
-
-  my $maxSize = $column_sizes{$tableName}{$columnIndex};
-  my $lengthOld = length($oldVal);
-  if ($maxSize && $lengthOld <= $maxSize) {
-    return $newVal;
-  }
-  return substr($newVal, 0, $lengthOld);
-}
-
-memoize('_getColSize');
-sub _getColSize {
-  my ($columnType, $size) = @_;
-  return $size if $size;
-  if (not($size)) { #Max size might not be explicitly known, so we can infer it from the data type
-    if ($columnType =~ /(?:text|blob)/) { #bigtext, mediumtext, text, blob, ...
-      $size = 1024;
-    }
-    elsif ($columnType eq 'date') {
-      $size = 10;
-    }
-    elsif ($columnType eq 'timestamp') {
-      $size = 24;
-    }
-    elsif ($columnType eq 'datetime') {
-      $size = 24;
-    }
-    elsif ($columnType eq 'enum') {
-      $size = 1024;
-    }
-    elsif ($columnType eq 'decimal') {
-      $size = 1024;
-    }
-    elsif ($columnType eq 'float') {
-      $size = 1024;
-    }
-    elsif ($columnType eq 'double') {
-      $size = 1024;
-    }
-  }
-  return $size;
-}
-
-=head2 getColumnNameByIndex
-
-TODO: Table information should be refactored to it's own package
-
-=cut
-
-sub getColumnNameByIndex {
-  my ($tableName, $colIndex) = @_;
-  return $table_reverse{$tableName}{$colIndex};
-}
-
-=head2 getColumnIndexByName
-
-TODO: Table information should be refactored to it's own package
-
-=cut
-
-sub getColumnIndexByName {
-  my ($tableName, $colName) = @_;
-  $l->logdie("\$colName '$colName' is not a SCALAR") if (ref($colName));
-  return $table{$tableName}{$colName};
-}
-
-=head2 getColumnNames
-
-@PARAM1 String, table name
-@RETURNS ARRAYRef of Strings, The names of the columns of the given table in proper order
-
-=cut
-
-memoize('getColumnNames');
-sub getColumnNames {
-  my ($tableName) = @_;
-  my @names;
-  while ( my ($i, $name) = each %{$table_reverse{$tableName}}) {
-    $names[$i] = $name;
-  }
-  return \@names;
+  my $maxSize = SQLAnon::AnonRules::getMaxSize( $tableName, $columnName );
+  return substr($newVal, 0, $maxSize);
 }
 
 =head pushToAnonValStash

@@ -56,8 +56,10 @@ subtest "Verify anonymized values", sub {
     &$testStash($stash, 'borrowers',     1,  'email',            '!KILL!');
     &$testStash($stash, 'borrowers',     2,  'borrowernumber',   3);
 
+    &$testStash($stash, 'message_queue', 0,  'to_address',       'nobody@example.com');
     &$testStash($stash, 'message_queue', 1,  'content',          'Ave Imperator, morituri te salutant');
     &$testStash($stash, 'message_queue', 1,  'to_address',       'nobody@example.com');
+    &$testStash($stash, 'message_queue', 2,  'to_address',       'nobody@example.com');
 
     &$testStash($stash, 'binaryblob',    0,  'description',      'Binary\'data\'mess');
     TODO: {
