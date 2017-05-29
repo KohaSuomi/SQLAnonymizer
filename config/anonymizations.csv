@@ -82,10 +82,10 @@ borrower_modifications, altcontactphone,    "sub { return '000-000 0000'; }"
 message_queue, content,    "sub { return 'Ave Imperator, morituri te salutant'; }"
 message_queue, to_address, "sub { return 'nobody@example.com'; }"
 
-z3950servers, userid,      random
-z3950servers, password,    random
+z3950servers, userid,      randomString()
+z3950servers, password,    randomString()
 
 systempreferences, value,  kohaSystempreferences()
 
-action_logs, timestamp,    killIfTimestampOlderThanYear()
-statistics,  datetime,     killIfTimestampOlderThanYear()
+action_logs,  !KILL!,      !KILL!
+statistics,   !KILL!,      !KILL!

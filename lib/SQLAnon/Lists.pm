@@ -133,6 +133,9 @@ sub get_value {
   if($type eq 'preserve') {
     $value = $oldVal;
   }
+  elsif($type eq '!KILL!') {
+    $value = '!KILL!';
+  }
   elsif($anon_data{$type}) {
     my $iterator = $anon_data_iterator{$type}++;
     $value = (defined($anon_data{$type}[$iterator])) ? $anon_data{$type}[$iterator] : '';

@@ -17,3 +17,5 @@ message_queue, to_address, "sub { return 'nobody@example.com'; }"
 
 binaryblob, description,   "sub { return $oldVal; }", #Pick the current index from the array of values in the INSERT-statement's value group
 binaryblob, biblob,        "sub { return $oldVal; }"
+
+killable,   !KILL!,        !KILL!

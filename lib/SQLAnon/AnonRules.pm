@@ -76,7 +76,7 @@ sub _checkRuleTypeFakeNameList {
   if (exists($fakeNameLists->{$type})) {
     #We got a matching "fake name list" == "type"
   }
-  elsif ($type eq 'preserve' || $type eq 'random') {    #Preserve these values
+  elsif ($type eq 'preserve' || $type eq '!KILL!') {    #Preserve these values
     #This is an allowed exception to the rule
   }
   else {
@@ -93,6 +93,15 @@ sub _checkRuleFilter {
 sub isTableAnonymizable {
   my ($tableName) = @_;
   return (exists $anon_columns{$tableName}) ? 1 : 0;
+}
+
+=head2 isKilled
+
+=cut
+
+sub isKilled {
+  my ($tableName) = @_;
+  return (exists $anon_columns{$tableName} && $anon_columns{$tableName}{'!KILL!'}) ? 1 : 0;
 }
 
 sub getAnonymizableColumnNames {

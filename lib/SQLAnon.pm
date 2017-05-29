@@ -135,18 +135,17 @@ sub inside_insert {
   my $start_of_string = $a1;
   $inside_insert = 1;
   if(SQLAnon::AnonRules::isTableAnonymizable($insert_table_name)) {
+    if (SQLAnon::AnonRules::isKilled($insert_table_name)) {
+      $l->info("Dropping data for table '$insert_table_name'");
+      return undef;
+    }
+
     my ($insert_table_name, $start_of_string, $lines) = decomposeInsertStatement($_);
 
     # loop through each line
     for (my $i=0 ; $i<scalar(@$lines) ; $i++) {
 
       my ($columns, $metaInfos) = decomposeValueGroup($lines->[$i]);
-
-      # store quote status foreach column
-      #my @quoted;
-      #foreach my $index (0..$#columns) {
-      #  push @quoted, $parser->is_quoted ($index);
-      #}
 
       # replace selected columns with anon value
       my ($kill);

@@ -113,6 +113,28 @@ INSERT INTO `binaryblob` VALUES (1,'Binary\'data\'mess','‰PNG\r\n\Z\n\0\0\0\rIHD
 /*!40000 ALTER TABLE `binaryblob` ENABLE KEYS */;
 UNLOCK TABLES;
 
+--
+-- Table structure for table `killable`
+--
+
+DROP TABLE IF EXISTS `killable`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `killable` (
+  `content` text COLLATE utf8_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `killable`
+--
+
+LOCK TABLES `killable` WRITE;
+/*!40000 ALTER TABLE `killable` DISABLE KEYS */;
+INSERT INTO `killable` VALUES ('kill'),('me'),('please');
+/*!40000 ALTER TABLE `killable` ENABLE KEYS */;
+UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

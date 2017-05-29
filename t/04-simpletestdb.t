@@ -41,10 +41,12 @@ subtest "Initialize and execute", sub {
 subtest "Verify anonymized values", sub {
   my ($stash);
   my $testStash = sub {
-    my ($stash, $tableName, $insertRowIndex, $columnName, $val, $unpack) = @_;
+    my ($stash, $tableName, $insertRowIndex, $columnName, $val, $unpack, $missing) = @_;
     my $expectedVal = ($unpack) ? unpack("H*", $stash->{$tableName}[$insertRowIndex]{$columnName}) : $stash->{$tableName}[$insertRowIndex]{$columnName};
     is($expectedVal, $val,
-       "$tableName $insertRowIndex $columnName");
+       "$tableName $insertRowIndex $columnName") unless $missing;
+    isnt($expectedVal, $val,
+       "$tableName $insertRowIndex $columnName") if $missing;
   };
   eval {
     ok($stash = SQLAnon::getAnonValStash(), "Given the stash of all anonymized values");
@@ -62,6 +64,8 @@ subtest "Verify anonymized values", sub {
     &$testStash($stash, 'message_queue', 2,  'to_address',       'nobody@example.com');
 
     &$testStash($stash, 'binaryblob',    0,  'description',      'Binary\'data\'mess');
+
+    &$testStash($stash, 'killable',      0,  'content',          'kill',      undef,         'expected missing');
     TODO: {
       local $TODO = "Text::CSV removes double escapes from binary output. This happens only when we anonymize binary data, which makes no sense.";
       &$testStash($stash, 'binaryblob',    0,  'biblob',           unpack("H*", $binaryBlob), 'unpack');
