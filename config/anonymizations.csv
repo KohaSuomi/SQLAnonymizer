@@ -1,7 +1,7 @@
 borrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrowers, surname,            etunimet
 borrowers, firstname,          sukunimet
-borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
 borrowers, title,              adjektiivit
 borrowers, email,              "sub { return 'nobody@example.com'; }"
 borrowers, phone,              "sub { return '000-000 0000'; }"
@@ -28,7 +28,7 @@ borrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 deletedborrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 deletedborrowers, surname,            etunimet
 deletedborrowers, firstname,          sukunimet
-deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
 deletedborrowers, title,              adjektiivit
 deletedborrowers, email,              "sub { return 'nobody@example.com'; }"
 deletedborrowers, phone,              "sub { return '000-000 0000'; }"
@@ -55,7 +55,7 @@ deletedborrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 borrower_modifications, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrower_modifications, surname,            etunimet
 borrower_modifications, firstname,          sukunimet
-borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
 borrower_modifications, title,              adjektiivit
 borrower_modifications, email,              "sub { return 'nobody@example.com'; }"
 borrower_modifications, phone,              "sub { return '000-000 0000'; }"
