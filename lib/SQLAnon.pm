@@ -18,6 +18,7 @@ package SQLAnon;
 use Memoize;
 use Data::Dumper;
 use Text::CSV;
+use Text::ParseWords;
 
 use SQLAnon::AnonRules;
 use SQLAnon::Lists;
@@ -209,7 +210,7 @@ sub decomposeInsertStatement {
     my $insertPrefix = $1;
     my $tableName = $2;
     # split insert statement
-    my @lines = split('\)\s*,\s*\(', $insertStatement);
+    my @lines = Text::ParseWords::parse_line('\)\s*,\s*\(', 1, $insertStatement);
     $lines[0] =~ s/\Q$insertPrefix\E//; # remove start of insert string
     $lines[$#lines] =~ s/\);\n?//; # remove trailing bracket from last line of insert
     return ($tableName, $insertPrefix, \@lines);

@@ -84,7 +84,7 @@ CREATE TABLE `message_queue` (
 
 LOCK TABLES `message_queue` WRITE;
 /*!40000 ALTER TABLE `message_queue` DISABLE KEYS */;
-INSERT INTO `message_queue` VALUES (1,'This is a test content\nThis is lke any other text\n    sometimes padded and centralized   \n','email55@example55.com'),(2,'Another test message','hopeful@together.com');
+INSERT INTO `message_queue` VALUES (1,'This is a test content\nThis is lke any other text\n    sometimes padded and centralized   \n','email55@example55.com'),(2,'Another test message','hopeful@together.com'),(3,'This ), ( is not a group  separator','parentheses.break.group@parsing.com');
 /*!40000 ALTER TABLE `message_queue` ENABLE KEYS */;
 UNLOCK TABLES;
 
