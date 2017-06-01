@@ -1,13 +1,13 @@
 borrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrowers, surname,            etunimet
 borrowers, firstname,          sukunimet
-borrowers, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
+borrowers, othernames,         "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('palindromit'); }"
 borrowers, title,              adjektiivit
 borrowers, email,              "sub { return 'nobody@example.com'; }"
 borrowers, phone,              "sub { return '000-000 0000'; }"
 borrowers, mobile,             "sub { return '000-000 0000'; }"
 borrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrowers, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrowers, userid,             "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus'); }"
 borrowers, cardnumber,         randomString()
 borrowers, opacnote,           quotes
 borrowers, borrowernotes,      quotes
@@ -28,13 +28,13 @@ borrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 deletedborrowers, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 deletedborrowers, surname,            etunimet
 deletedborrowers, firstname,          sukunimet
-deletedborrowers, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
+deletedborrowers, othernames,         "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('palindromit'); }"
 deletedborrowers, title,              adjektiivit
 deletedborrowers, email,              "sub { return 'nobody@example.com'; }"
 deletedborrowers, phone,              "sub { return '000-000 0000'; }"
 deletedborrowers, mobile,             "sub { return '000-000 0000'; }"
 deletedborrowers, smsalertnumber,     "sub { return '000-000 0000'; }"
-deletedborrowers, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+deletedborrowers, userid,             "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus'); }"
 deletedborrowers, cardnumber,         randomString()
 deletedborrowers, opacnote,           quotes
 deletedborrowers, borrowernotes,      quotes
@@ -55,13 +55,13 @@ deletedborrowers, altcontactphone,    "sub { return '000-000 0000'; }"
 borrower_modifications, borrowernumber,     preserve, #This is a comment: we need to debug issues found in production and find the matching borrower in dev/testing
 borrower_modifications, surname,            etunimet
 borrower_modifications, firstname,          sukunimet
-borrower_modifications, othernames,         "sub { return SQLAnon::Lists::get_value('palindromit') . int(rand(99999)); }"
+borrower_modifications, othernames,         "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('palindromit'); }"
 borrower_modifications, title,              adjektiivit
 borrower_modifications, email,              "sub { return 'nobody@example.com'; }"
 borrower_modifications, phone,              "sub { return '000-000 0000'; }"
 borrower_modifications, mobile,             "sub { return '000-000 0000'; }"
 borrower_modifications, smsalertnumber,     "sub { return '000-000 0000'; }"
-borrower_modifications, userid,             "sub { return SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus') . int(rand(99999)); }"
+borrower_modifications, userid,             "sub { return int(rand(99999)) . SQLAnon::Lists::get_value('adjektiivit') . SQLAnon::Lists::get_value('varaustunnus'); }"
 borrower_modifications, cardnumber,         randomString()
 borrower_modifications, opacnote,           quotes
 borrower_modifications, borrowernotes,      quotes
