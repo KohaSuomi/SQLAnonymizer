@@ -30,7 +30,7 @@ subtest "Initialize and execute. Die because a UNIQUE value couldn't be generate
          "SQLAnon::anonymize success");
       ok(0, "SQLAnon::anonymize() must die horribly due to a duplicate exception");
     } catch {
-      like($_, qr/UNIQUE.+endless loop!/, "SQLAnon::anonymize() died of probable causes.")
+      like($_, qr/UNIQUE.+'a-duplicate-value'.+endless loop!/, "SQLAnon::anonymize() died of probable causes.")
     };
   };
   ok(0, $@) if $@;

@@ -379,7 +379,7 @@ sub _dispatchValueFinder {
     $loops++;
     if ($isUnique && $uniqueDeduplicationTracker{"$tableName-$columnName-$newVal"} && $newVal ne 'NULL') {
       $l->info("Dispatched table '$tableName', column '$columnName' UNIQUE constraint failed for '$newVal', retry loop '$loops'") if $l->is_info();
-      $l->logdie("Finding a suitable UNIQUE value, for table '$tableName', column '$columnName', ended up in an endless loop!") if $loops > 10;
+      $l->logdie("Finding a suitable UNIQUE value '$newVal', for table '$tableName', column '$columnName', ended up in an endless loop!") if $loops > 10;
     }
     else {
       last; #Break away if we have a confirmedly unique value, or if we dont care
