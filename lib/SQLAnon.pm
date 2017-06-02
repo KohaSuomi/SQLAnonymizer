@@ -352,7 +352,11 @@ sub _dispatchValueFinder {
   my $loops = 0;
   while (1) { #Keep retrying if the unique value is already reserved for this table and column
     #Start dispatching
-    if ($rule->{dispatch}) {
+    if ($oldVal eq 'NULL') {
+      $newVal = $oldVal;
+      $dispatchType = 'NULLer';
+    }
+    elsif ($rule->{dispatch}) {
       $dispatchType = 'dispatch';
       my $closure = eval $rule->{ 'dispatch' };
       $newVal = $closure->(@_);
@@ -373,7 +377,7 @@ sub _dispatchValueFinder {
 
     #Done dispatching, time to reap rewards
     $loops++;
-    if ($isUnique && $uniqueDeduplicationTracker{"$tableName-$columnName-$newVal"}) {
+    if ($isUnique && $uniqueDeduplicationTracker{"$tableName-$columnName-$newVal"} && $newVal ne 'NULL') {
       $l->info("Dispatched table '$tableName', column '$columnName' UNIQUE constraint failed for '$newVal', retry loop '$loops'") if $l->is_info();
       $l->logdie("Finding a suitable UNIQUE value, for table '$tableName', column '$columnName', ended up in an endless loop!") if $loops > 10;
     }

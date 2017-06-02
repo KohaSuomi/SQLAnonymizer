@@ -29,8 +29,12 @@ DROP TABLE IF EXISTS `borrowers`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `borrowers` (
+  `nullable` varchar(16) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `nullrandstring` varchar(16) COLLATE utf8_unicode_ci DEFAULT NULL,
   `cardnumber` varchar(16) COLLATE utf8_unicode_ci DEFAULT NULL,
   `othernames` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  UNIQUE KEY `nullable` (`nullable`),
+  UNIQUE KEY `nullrandstring` (`nullrandstring`),
   UNIQUE KEY `cardnumber` (`cardnumber`),
   UNIQUE KEY `othernames` (`othernames`),
 ) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -42,7 +46,7 @@ CREATE TABLE `borrowers` (
 
 LOCK TABLES `borrowers` WRITE;
 /*!40000 ALTER TABLE `borrowers` DISABLE KEYS */;
-INSERT INTO `borrowers` VALUES ('☻☻☻☻','123'),('Nightrider','223'),('Yökastelija','323');
+INSERT INTO `borrowers` VALUES (NULL,NULL,'☻☻☻☻','123'),(NULL,NULL,'Nightrider','223'),(NULL,NULL,'Yökastelija','323');
 /*!40000 ALTER TABLE `borrowers` ENABLE KEYS */;
 UNLOCK TABLES;
 

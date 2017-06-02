@@ -41,10 +41,18 @@ subtest "Verify anonymized values", sub {
   eval {
     ok($stash = SQLAnon::getAnonValStash(), "Given the stash of all anonymized values");
 
+    is ($stash->{'borrowers'}[0]{'nullable'}, 'NULL',
+        "0 nullable from preserve ok");
+    is ($stash->{'borrowers'}[0]{'nullrandstring'}, 'NULL',
+        "0 nullrandstring from randomString()-filter ok");
     is ($stash->{'borrowers'}[0]{'cardnumber'}, '☻☻☻☻',
         "0 cardnumber ok");
     is ($stash->{'borrowers'}[0]{'othernames'}, 'a-duplicate-value',
         "0 othernames ok");
+    is ($stash->{'borrowers'}[1]{'nullable'}, 'NULL',
+        "1 nullable from preserve ok");
+    is ($stash->{'borrowers'}[1]{'nullrandstring'}, 'NULL',
+        "1 nullrandstring from randomString()-filter ok");
     is ($stash->{'borrowers'}[1]{'cardnumber'}, 'Nightrider',
         "1 cardnumber ok");
     is ($stash->{'borrowers'}[1]{'othernames'}, undef,

@@ -1,2 +1,4 @@
+borrowers, nullable,       preserve
+borrowers, nullrandstring, randomString()
 borrowers, cardnumber,     preserve
 borrowers, othernames,     "sub { 'a-duplicate-value' }", #Will trigger SQLAnon to die from unrecoverable duplication!
