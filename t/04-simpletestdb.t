@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-$ENV{SQLAnonMODE} = 'testing';
-
 use Modern::Perl;
 use utf8;
 binmode(STDOUT, ":utf8");
@@ -10,6 +8,10 @@ binmode(STDIN, ":utf8");
 
 use Test::More;
 
+use Cwd;
+
+$ENV{SQLAnonMODE} = 'testing';
+$ENV{SQLAnonCONF} = getcwd().'/t/config/04-simpletestdb.conf';
 
 
 use SQLAnon;

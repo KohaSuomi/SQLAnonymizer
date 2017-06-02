@@ -46,11 +46,10 @@ sub getConfig {
   return $config if $config;
 
   my $confFile;
-  my @confFileTries = (getcwd().'/config/SQLAnon.conf', getcwd().'/../config/SQLAnon.conf', '/etc/SQLAnon/SQLAnon.conf');
+  my @confFileTries;
+  push (@confFileTries, $ENV{SQLAnonCONF}) if $ENV{SQLAnonCONF};
+  push (@confFileTries, getcwd().'/config/SQLAnon.conf', getcwd().'/../config/SQLAnon.conf', '/etc/SQLAnon/SQLAnon.conf');
 
-  if ($ENV{SQLAnonMODE} && $ENV{SQLAnonMODE} eq 'testing') {
-    @confFileTries = (getcwd().'/t/config/SQLAnon.conf');
-  }
   foreach my $candidate (@confFileTries) {
     if (-e $candidate) {
       $confFile = $candidate;

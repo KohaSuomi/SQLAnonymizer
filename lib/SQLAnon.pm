@@ -57,14 +57,16 @@ my %column_reverse;
 my %contains_anon_column;
 my %data_types;   #What data types are each column in each table? ...   table->columnNumber->?type?
 my %column_sizes; #How many characters each column in each table can take? ...   table->columnNumber->?size?
+my %column_constraints; #Any UNIQUE constrainsts? ... ->{"$tableName-$columnName-$constraintName"} = 1
 
 #Tracks all the anonymized values for each table, insert-row and column. This is used afterwards to run automated tests against.
 my %anonValStash; #$anonValStash{$tableName}[insertRowIndex]{$columnName} = $newValue;
 
 
 sub init {
-  SQLAnon::AnonRules::loadAnonymizationRules();
-  SQLAnon::Lists::loadFakeNameLists();
+  my ($anonymizationRulesFile, $fakeNameListsDir) = @_;
+  SQLAnon::AnonRules::loadAnonymizationRules($anonymizationRulesFile);
+  SQLAnon::Lists::loadFakeNameLists($fakeNameListsDir);
   return 1;
 }
 
@@ -74,16 +76,19 @@ sub anonymize {
   ($IN, $OUT) = getIOHandles($inputStream, $outputStream);
 
   while (<$IN>) {
-    if ($inside_create == 1 && $_ =~ /ENGINE=(InnoDB|MyISAM)/) {
+    if ($inside_create == 1 && $_ =~ /^\) ENGINE=(InnoDB|MyISAM)/) {
       $inside_create = 0; # create statement is finished
     }
-
-    if ($inside_create == 0 && $_ =~ /^CREATE TABLE `([a-z0-9_]+)` \(/) {
-      create_table($1);
-    }
-
-    if ($inside_create == 1 && $_ =~ /`([A-z0-9_]+)`\s([a-z]+)(?:\((\d+)\))?/ && $_ !~ /CREATE TABLE/) {
+    elsif ($inside_create == 1 && $_ =~ /^  `([A-z0-9_]+)`\s([a-z]+)(?:\((\d+)\))?/) {
       inside_create($1, $2, $3); # parse create statement to index column positions
+    }
+    elsif ($inside_create == 1) {
+      if (my @matches = $_ =~ /^  (UNIQUE|PRIMARY) KEY `([A-z0-9_]+)`\s\((`[A-z0-9_]+`,?)+\)/) {
+        insideConstraint($create_table_name, @matches);
+      }
+    }
+    elsif ($inside_create == 0 && $_ =~ /^CREATE TABLE `([a-z0-9_]+)` \(/) {
+      create_table($1);
     }
 
     if($_ =~ $inside_insert_regexp) {
@@ -116,18 +121,33 @@ sub inside_create {
   # process create statment to record ordinal position of columns
   my ($column, $type, $size) = @_;
   $size = _getColSize($type, $size);
-  $l->warn("Unknown size for table '$create_table_name' column '$column'") if (not($size) && $l->warn());
+  $l->warn("Unknown size for table '$create_table_name' column '$column'") if (not($size) && $l->is_warn());
   $column_name = $column;
   $table{$create_table_name}{$column_name} = $column_number;
   $table_reverse{$create_table_name}{$column_number} = $column_name;
   $data_types{$create_table_name}{$column_number} = $type;
   $column_sizes{$create_table_name}{$column_number} = $size;
 
-  $l->debug("Analyzed table '$create_table_name', column '$column', type '$type', size '$size'");
+  $l->debug("Analyzed table '$create_table_name', column '$column', type '$type', size '$size'") if $l->is_debug;
 
   $column_number++;
 }
 
+=head2 insideConstraint
+
+Extract table constraints. One column can have multiple constraints
+
+=cut
+
+sub insideConstraint {
+  my ($tableName, $constraint, $indexName, @columnNames) = @_;
+
+  foreach my $cn (@columnNames) {
+    $cn =~ s/`//g;
+    $l->debug("Analyzed table '$tableName', column '$cn', constraint '$constraint'") if $l->is_debug;
+    $column_constraints{"$tableName-$cn-$constraint"} = 1;
+  }
+}
 
 sub inside_insert {
   my ($a1, $a2) = @_;
@@ -319,33 +339,51 @@ Find out how to get the anonymized value and get it
 
 =cut
 
+my %uniqueDeduplicationTracker; #Track unique values for each table and column if column has unique-constraint
 my $filterDispatcher = bless({}, 'SQLAnon::Filters');
 sub _dispatchValueFinder {
   my ($tableName, $columnName, $columnValues, $index) = @_;
   my $oldVal = $columnValues->[$index];
   my $rule = SQLAnon::AnonRules::getRule( $tableName, $columnName );
+  my $isUnique = _isUnique($tableName, $columnName);
   $l->logdie("Anonymization rule not found for table '$tableName', column '$columnName'. We shouldn't even need to ask for it? Why does this happen?") unless $rule;
 
   my ($newVal, $dispatchType);
-  if ($rule->{dispatch}) {
-    $dispatchType = 'dispatch';
-    my $closure = eval $rule->{ 'dispatch' };
-    $newVal = $closure->(@_);
-    $l->logdie("In anonymization rule for table '$tableName', column '$columnName', when compiling custom code injection, got the following error:    $@") if $@;
+  my $loops = 0;
+  while (1) { #Keep retrying if the unique value is already reserved for this table and column
+    #Start dispatching
+    if ($rule->{dispatch}) {
+      $dispatchType = 'dispatch';
+      my $closure = eval $rule->{ 'dispatch' };
+      $newVal = $closure->(@_);
+      $l->logdie("In anonymization rule for table '$tableName', column '$columnName', when compiling custom code injection, got the following error:    $@") if $@;
+    }
+    elsif ($rule->{filter}) {
+      $dispatchType = 'filter';
+      my $filter = $rule->{filter};
+      $newVal = $filterDispatcher->$filter($tableName, $columnName, $columnValues, $index);
+    }
+    elsif ($rule->{fakeNameList}) {
+      $dispatchType = 'fakeNameList';
+      $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList}, $columnValues->[ $index ]);
+    }
+    else {
+      $l->logdie("In anonymization rule for table '$tableName', column '$columnName', dont know how to get the anonymized value using rule '".$l->flatten($rule)."'");
+    }
+
+    #Done dispatching, time to reap rewards
+    $loops++;
+    if ($isUnique && $uniqueDeduplicationTracker{"$tableName-$columnName-$newVal"}) {
+      $l->info("Dispatched table '$tableName', column '$columnName' UNIQUE constraint failed for '$newVal', retry loop '$loops'") if $l->is_info();
+      $l->logdie("Finding a suitable UNIQUE value, for table '$tableName', column '$columnName', ended up in an endless loop!") if $loops > 10;
+    }
+    else {
+      last; #Break away if we have a confirmedly unique value, or if we dont care
+    }
   }
-  elsif ($rule->{filter}) {
-    $dispatchType = 'filter';
-    my $filter = $rule->{filter};
-    $newVal = $filterDispatcher->$filter($tableName, $columnName, $columnValues, $index);
-  }
-  elsif ($rule->{fakeNameList}) {
-    $dispatchType = 'fakeNameList';
-    $newVal = SQLAnon::Lists::get_value($rule->{fakeNameList}, $columnValues->[ $index ]);
-  }
-  else {
-    $l->logdie("In anonymization rule for table '$tableName', column '$columnName', dont know how to get the anonymized value using rule '".$l->flatten($rule)."'");
-  }
-  $l->debug("Dispatched table '$tableName', column '$columnName' via '$dispatchType', returning '$newVal'");
+  $uniqueDeduplicationTracker{"$tableName-$columnName-$newVal"} = 1 if $isUnique;
+
+  $l->debug("Dispatched table '$tableName', column '$columnName' via '$dispatchType', returning '$newVal'") if $l->is_debug;
   return $newVal;
 }
 
@@ -398,6 +436,11 @@ sub _getColSize {
     }
   }
   return $size;
+}
+
+sub _isUnique {
+  my ($tableName, $columnName) = @_;
+  return $column_constraints{"$tableName-$columnName-UNIQUE"};
 }
 
 =head2 getColumnNameByIndex
