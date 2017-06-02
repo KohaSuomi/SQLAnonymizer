@@ -54,7 +54,7 @@ subtest "Verify anonymized values", sub {
     ok($stash = SQLAnon::getAnonValStash(), "Given the stash of all anonymized values");
 
     &$testStash($stash, 'borrowers',     0,  'borrowernumber',   1);
-    &$testStash($stash, 'borrowers',     0,  'email',            'nobody@example.com');
+    &$testStash($stash, 'borrowers',     0,  'email',            'NULL');
     &$testStash($stash, 'borrowers',     0,  'othernames',       '☻☻☻☻');
     &$testStash($stash, 'borrowers',     1,  'borrowernumber',   2);
     &$testStash($stash, 'borrowers',     1,  'email',            '!KILL!');
