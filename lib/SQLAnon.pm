@@ -156,7 +156,7 @@ sub inside_insert {
   $inside_insert = 1;
   if(SQLAnon::AnonRules::isTableAnonymizable($insert_table_name)) {
     if (SQLAnon::AnonRules::isKilled($insert_table_name)) {
-      $l->info("Dropping data for table '$insert_table_name'");
+      $l->trace("Dropping data for table '$insert_table_name'") if $l->is_trace;
       return undef;
     }
 
