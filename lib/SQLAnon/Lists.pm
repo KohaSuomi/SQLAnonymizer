@@ -1,7 +1,7 @@
 use Modern::Perl;
 #use utf8;
-binmode STDOUT, ":utf8";
-binmode STDERR, ":utf8";
+#binmode STDOUT, ":utf8";
+#binmode STDERR, ":utf8";
 use autodie;
 
 package SQLAnon::Lists;
@@ -59,7 +59,7 @@ sub loadFakeNameLists {
   foreach my $key (sort keys %$lists) {
     $l->trace("Loading $key");
     #open(my $fh, "<:encoding(UTF-8)", $lists->{$key}->{file}) or $l->logdie("Can't open fake name list '".$lists->{$key}->{file}."': $!");
-    open(my $fh, "<:raw", $lists->{$key}->{file}) or $l->logdie("Can't open fake name list '".$lists->{$key}->{file}."': $!");    
+    open(my $fh, "<", $lists->{$key}->{file}) or $l->logdie("Can't open fake name list '".$lists->{$key}->{file}."': $!");
     my @data;
     while(<$fh>) {
       if ($fakeNameListMaxSize == -1) {

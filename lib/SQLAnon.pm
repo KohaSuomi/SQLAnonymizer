@@ -5,8 +5,8 @@ $Carp::Verbose = 'true'; #die with stack trace
 use Try::Tiny;
 use Scalar::Util qw(blessed);
 #use utf8; #See. head3 UTF-8 handling
-binmode STDOUT, ":utf8";
-binmode STDERR, ":utf8";
+#binmode STDOUT, ":utf8";
+#binmode STDERR, ":utf8";
 #binmode STDIN, ":utf8"; #See. head3 UTF-8 handling
 
 package SQLAnon;
@@ -518,7 +518,7 @@ sub getIOHandles {
   }
   if ($inputStream ne '-') {
     #open($IN, "<:encoding(UTF-8)", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
-    open($IN, "<:raw", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
+    open($IN, "<", $inputStream) or $l->logdie("Can't open input stream '$inputStream': $!");
   }
   else {
     $IN = *STDIN;
@@ -528,7 +528,7 @@ sub getIOHandles {
   }
   if ($outputStream ne '-') {
     #open($OUT, ">:encoding(UTF-8)", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
-    open($OUT, ">:raw", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
+    open($OUT, ">", $outputStream) or $l->logdie("Can't open output stream '$outputStream': $!");
   }
   else {
     $OUT = *STDOUT;

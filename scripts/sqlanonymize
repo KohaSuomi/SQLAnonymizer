@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 
 use Modern::Perl;
-use utf8;
-binmode STDOUT, ":utf8";
-binmode STDERR, ":utf8";
+#use utf8;
+#binmode STDOUT, ":utf8";
+#binmode STDERR, ":utf8";
 use autodie;
 
 use Carp qw(longmess);
