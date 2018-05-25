@@ -41,7 +41,7 @@ subtest "SQLAnon::decompose/recompose insert statement", sub {
   my ($tableName, $insertStatement, $insertPrefix, $valueStrings, $valueStrings2, $valueColumns, $metaColumns, $valueString);
   my @originalValueStrings;
   my $originalInsertStatement = "INSERT INTO `borrowers` VALUES ";
-  $originalValueStrings[0] =    "1,'1','ÄÄDMÖN','Köhä','',NULL,'BREAK,CHAR,TEXT::CSV',NULL,'MPL','S',NULL,'2099-12-31',NULL";
+  $originalValueStrings[0] =    "1,'1','ÄÄDMÖN','Köh\\r\\nä','',NULL,'BREAK,CHAR,TEXT::CSV',NULL,'MPL','S',NULL,'2099-12-31',NULL";
   $originalValueStrings[1] =    "2,'term1','SIP-Server','Sippy2','',NULL,'5601 Library Rd.','(212) 555-1212',NULL,'CPL','ST','1985-10-24','2020-12-31','\$2a\$08\$Qz/FkOMmEne3.m0WoYHvZ.4eVNuNmX9ZGzRntt9aircQSWj0D5Oxm'";
   $originalValueStrings[2] =    "3,'23529000445172','Daniels','Tanya','',NULL,'2035 Library Rd.','(212) 555-1212','1966-10-14','MPL','PT','1990-08-22','2020-12-31','42b29d0771f3b7ef'";
   $originalValueStrings[3] =    "4,'23529000105040','Dillon','Eva','',NULL,'8916 Library Rd.','(212) 555-1212','1952-04-03','MPL','PT','1987-07-01','2020-12-31','42b29d0771f3b7ef'";
@@ -79,7 +79,7 @@ subtest "SQLAnon::decompose/recompose insert statement", sub {
     $valueColumns = [];
     $metaColumns  = [];
     ok(($valueColumns->[0], $metaColumns->[0]) = SQLAnon::decomposeValueGroup($valueStrings->[0]), "Given the decomposed 1. value group");
-    is_deeply($valueColumns->[0],    [ 1,'1','ÄÄDMÖN','Köhä','','NULL','BREAK,CHAR,TEXT::CSV','NULL','MPL','S','NULL','2099-12-31','NULL' ],
+    is_deeply($valueColumns->[0],    [ 1,'1','ÄÄDMÖN',"Köh\\r\\nä",'','NULL','BREAK,CHAR,TEXT::CSV','NULL','MPL','S','NULL','2099-12-31','NULL' ],
       "Then 1. columns match");
     ok(($valueColumns->[1], $metaColumns->[1]) = SQLAnon::decomposeValueGroup($valueStrings->[1]), "Given the decomposed 2. value group");
     is_deeply($valueColumns->[1],    [ 2,'term1','SIP-Server','Sippy2','','NULL','5601 Library Rd.','(212) 555-1212','NULL','CPL','ST','1985-10-24','2020-12-31','$2a$08$Qz/FkOMmEne3.m0WoYHvZ.4eVNuNmX9ZGzRntt9aircQSWj0D5Oxm' ],

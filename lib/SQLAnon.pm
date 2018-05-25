@@ -39,7 +39,14 @@ work with input/output in :raw-encoding
 
 =cut
 
-my $parser = Text::CSV->new( { binary => 1, quote_char => "'", escape_char => '\\', keep_meta_info => 1, allow_loose_escapes => 1, always_quote => 1 });
+my $parser = Text::CSV->new({
+  binary => 1,
+  quote_char => "'",
+  escape_char => "\\",
+  keep_meta_info => 1,
+  allow_loose_escapes => 1,
+  always_quote => 1,
+});
 
 my $IN; #Input stream
 my $OUT; #Output stream
@@ -266,13 +273,22 @@ You can recomposeValuegroup() using these same @RETURN values.
 sub decomposeValueGroup {
   my ($valueString) = @_;
 
+  if ($parser->allow_loose_escapes) {
+    $valueString =~ s/\\r\\n/{_LINEBRK_}/g;
+  }
+
   # use Text::CSV to parse the values
   my $status = $parser->parse($valueString);
   my @columns = $parser->fields();
   if($#columns == 0) {
     $l->logdie("Error parsing .csv-line '$valueString' got Text::CSV status='$status' error: ".$parser->error_input());
   }
+  foreach my $col (@columns) {
+    $col =~ s/{_LINEBRK_}/\\r\\n/g;
+  }
+
   my @meta = $parser->meta_info();
+
   return (\@columns, \@meta);
 }
 
@@ -303,6 +319,7 @@ sub recomposeValueGroup {
         # use Text:CSV to add quotes - it will escape any quotes in the string
         $parser->combine( $columns->[$i] );
         $columns->[$i] =  $parser->string;
+        $columns->[$i] =~ s/\\\\r\\\\n/\\r\\n/g;
       #}
       $l->trace("Quoted table '$tableName', column '".getColumnNameByIndex($tableName, $i)."' value '".$columns->[$i]."'") if $l->is_trace;
     }
